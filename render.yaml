@@ -9,14 +9,12 @@ services:
     dockerfilePath: ./Dockerfile
     healthCheckPath: /api/health
     envVars:
+      # Chaîne « Java » de Neon (contient déjà utilisateur et mot de passe) :
+      # jdbc:postgresql://ep-xxx.neon.tech/neondb?user=...&password=...&sslmode=require
       - key: DB_URL
-        sync: false   # ex. jdbc:postgresql://ep-xxx.eu-central-1.aws.neon.tech/neondb?sslmode=require
-      - key: DB_USER
-        sync: false
-      - key: DB_PASSWORD
         sync: false
       - key: CORS_ORIGINS
-        sync: false   # ex. https://isetcare.netlify.app
+        value: http://localhost:5173   # remplacé ensuite par l'adresse Netlify
       - key: GEMINI_API_KEY
         sync: false   # clé gratuite : https://aistudio.google.com/apikey
       - key: JWT_SECRET
