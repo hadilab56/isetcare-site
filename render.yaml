@@ -9,8 +9,7 @@ services:
     dockerfilePath: ./Dockerfile
     healthCheckPath: /api/health
     envVars:
-      # Chaîne « Java » de Neon (contient déjà utilisateur et mot de passe) :
-      # jdbc:postgresql://ep-xxx.neon.tech/neondb?user=...&password=...&sslmode=require
+      # Chaîne de connexion Neon, telle quelle (postgresql://... ou jdbc:postgresql://...)
       - key: DB_URL
         sync: false
       - key: CORS_ORIGINS
