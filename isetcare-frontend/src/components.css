@@ -1,0 +1,219 @@
+/* =========================================================
+   STYLES DES COMPOSANTS
+   Classes utilisées par les composants mais absentes de styles.css
+   (fenêtres modales, calendrier, tableaux, badges, graphiques...).
+   ========================================================= */
+
+/* ---------- Texte ---------- */
+.muted { color: var(--text-muted); }
+.small { font-size: 0.85rem; }
+.prewrap { white-space: pre-wrap; }
+.text-primary { color: var(--primary); }
+.section-title { font-size: 1rem; font-weight: 700; margin: 1.25rem 0 0.5rem; color: var(--text-main); }
+.desc { color: var(--text-main); line-height: 1.5; }
+.tag {
+  display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px;
+  background: var(--primary-light); color: var(--primary); font-size: 0.78rem; font-weight: 600;
+}
+
+/* ---------- Alertes ---------- */
+.alert {
+  padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem;
+  border: 1px solid var(--border); background: #f8fafc; font-size: 0.9rem;
+}
+.alert.alert-error { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+.alert-ok, .alert.alert-ok { background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; }
+.alert-warn, .alert.alert-warn { background: #fffbeb; border: 1px solid #fde68a; color: #b45309; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; }
+
+/* ---------- Boutons ---------- */
+.btn-primary {
+  background: var(--primary); color: #fff; border: 1px solid var(--primary);
+  padding: 0.55rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer;
+}
+.btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+.btn-outline {
+  background: #fff; color: var(--primary); border: 1px solid var(--primary);
+  padding: 0.55rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer;
+}
+.btn-outline:hover:not(:disabled) { background: var(--primary-light); }
+.btn-small { padding: 0.3rem 0.65rem !important; font-size: 0.82rem !important; }
+.btn-secondary-pro {
+  display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 1rem;
+  border-radius: 8px; border: 1px solid var(--border); background: #fff; color: var(--text-main);
+  font-weight: 600; text-decoration: none; cursor: pointer;
+}
+.btn-secondary-pro:hover { background: #f8fafc; }
+.actions, .inline-actions, .modal-actions {
+  display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;
+}
+.modal-actions { justify-content: flex-end; margin-top: 1.25rem; }
+.end { justify-content: flex-end; }
+.row { display: flex; gap: 1rem; flex-wrap: wrap; }
+.row > * { flex: 1 1 200px; }
+
+/* ---------- Fenêtres modales ---------- */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 6vh 1rem; overflow-y: auto;
+}
+.modal {
+  width: 100%; max-width: 520px; background: var(--bg-card);
+  border-radius: var(--radius); box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+  padding: 1.5rem; animation: modal-in 0.15s ease-out;
+}
+.modal.wide { max-width: 760px; }
+@keyframes modal-in { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+.detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem 1.25rem; }
+
+/* ---------- Tableaux ---------- */
+.table-wrap, .pro-table-wrap { width: 100%; overflow-x: auto; }
+.pro-table { width: 100%; border-collapse: collapse; }
+.pro-table th, .pro-table td { padding: 0.7rem 0.75rem; border-bottom: 1px solid var(--border); text-align: left; }
+.pro-table tbody tr:hover { background: #f8fafc; }
+.action-cell { text-align: right; white-space: nowrap; }
+.date-cell { white-space: nowrap; color: var(--text-muted); font-size: 0.88rem; }
+.empty-icon { color: #cbd5e1; margin-bottom: 0.5rem; }
+.pad { padding: 1rem; }
+.page-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+
+/* ---------- Badges d'état / statut / priorité / maintenance ---------- */
+.etat-EN_SERVICE, .statut-RESOLU, .statut-CLOTURE, .maint-REALISEE { background: #d1fae5; color: #047857; }
+.etat-EN_PANNE { background: #fee2e2; color: #b91c1c; }
+.etat-EN_MAINTENANCE, .statut-AFFECTEE, .statut-EN_COURS, .maint-PLANIFIEE { background: #fef3c7; color: #b45309; }
+.etat-HORS_SERVICE, .maint-ANNULEE { background: #e2e8f0; color: #475569; }
+.maint-EN_RETARD { background: #fee2e2; color: #b91c1c; }
+.statut-NOUVEAU { background: #dbeafe; color: #1d4ed8; }
+.prio-BASSE { background: #f1f5f9; color: #475569; }
+.prio-MOYENNE { background: #dbeafe; color: #1d4ed8; }
+.prio-HAUTE { background: #ffedd5; color: #c2410c; }
+.prio-URGENTE { background: #fee2e2; color: #b91c1c; }
+
+/* ---------- Indicateurs (KPI) ---------- */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; margin: 0.75rem 0; }
+.kpi {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 0.85rem 1rem; display: flex; flex-direction: column; gap: 0.2rem;
+}
+.kpi strong { font-size: 1.35rem; color: var(--text-main); }
+.kpi span { font-size: 0.8rem; color: var(--text-muted); }
+
+/* ---------- Graphique à barres ---------- */
+.bars { display: flex; flex-direction: column; gap: 0.55rem; }
+.bar-row { display: grid; grid-template-columns: minmax(90px, 30%) 1fr auto; align-items: center; gap: 0.6rem; }
+.bar-label { font-size: 0.85rem; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-track { height: 10px; background: #f1f5f9; border-radius: 999px; overflow: hidden; }
+.bar-fill { height: 100%; background: var(--primary); border-radius: 999px; min-width: 2px; }
+.bar-value { font-size: 0.85rem; }
+
+/* ---------- Recommandation IA ---------- */
+.reco { border-radius: 10px; padding: 0.9rem 1rem; margin-top: 0.75rem; border: 1px solid var(--border); }
+.reco p { margin: 0.35rem 0 0; }
+.reco ul { margin: 0.4rem 0 0; padding-left: 1.2rem; }
+.reco-REPARER { background: #ecfdf5; border-color: #a7f3d0; }
+.reco-SURVEILLER { background: #fffbeb; border-color: #fde68a; }
+.reco-REMPLACER { background: #fef2f2; border-color: #fecaca; }
+
+/* ---------- Calendrier des maintenances ---------- */
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-head { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-align: center; padding: 0.3rem 0; }
+.cal-day {
+  min-height: 84px; background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 0.3rem; display: flex; flex-direction: column; gap: 3px;
+}
+.cal-day.empty { background: transparent; border-color: transparent; }
+.cal-day.today { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
+.cal-num { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); }
+.cal-chip {
+  font-size: 0.7rem; padding: 0.15rem 0.35rem; border-radius: 5px; border: none;
+  text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.empty { color: var(--text-muted); }
+
+/* ---------- Interventions (frise) ---------- */
+.timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+.timeline > li { border-left: 3px solid var(--primary); padding: 0.25rem 0 0.25rem 0.85rem; }
+.timeline-head { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+
+/* ---------- Sélecteur d'équipement ---------- */
+.picker { position: relative; display: flex; flex-direction: column; gap: 0.4rem; }
+.picked {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+  padding: 0.6rem 0.8rem; border: 1px solid var(--border); border-radius: 8px; background: var(--primary-light);
+}
+
+/* ---------- Photos et QR codes ---------- */
+.photo { max-width: 100%; border-radius: 8px; border: 1px solid var(--border); }
+.photo.preview { max-width: 220px; }
+.qr-modal { text-align: center; }
+.qr-label { font-weight: 700; margin-top: 0.5rem; }
+@media print {
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area { position: absolute; inset: 0; }
+}
+
+/* ---------- Menu ---------- */
+.nav-icon { display: inline-flex; flex-shrink: 0; }
+.nav-label { flex: 1; }
+.sidebar-version { font-size: 0.72rem; color: var(--text-muted); padding: 0.5rem 1rem; }
+.bell { position: relative; display: inline-flex; text-decoration: none; }
+.bell-count {
+  position: absolute; top: -6px; right: -8px; min-width: 18px; height: 18px; padding: 0 4px;
+  border-radius: 999px; background: #ef4444; color: #fff; font-size: 0.7rem; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.login-form { display: flex; flex-direction: column; gap: 0.9rem; }
+
+/* =========================================================
+   Assistant IA (ChatWidget) et téléchargement de l'application
+   ========================================================= */
+.chat-fab {
+  position: fixed; right: 20px; bottom: 20px; z-index: 1000;
+  width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer;
+  background: var(--primary); color: #fff; box-shadow: var(--shadow-md);
+  display: flex; align-items: center; justify-content: center;
+}
+.chat-fab:hover { background: var(--primary-hover); }
+.chat-panel {
+  position: fixed; right: 20px; bottom: 20px; z-index: 1000;
+  width: 360px; max-width: calc(100vw - 32px); height: 480px; max-height: calc(100vh - 100px);
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18); display: flex; flex-direction: column; overflow: hidden;
+}
+.chat-header {
+  display: flex; align-items: center; gap: 8px; padding: 12px 14px;
+  background: var(--primary); color: #fff; font-weight: 600;
+}
+.chat-close { margin-left: auto; background: none; border: none; color: #fff; cursor: pointer; display: flex; }
+.chat-messages { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.chat-msg { max-width: 85%; padding: 8px 12px; border-radius: 12px; font-size: 0.9rem; line-height: 1.4; white-space: pre-wrap; }
+.chat-msg-bot { align-self: flex-start; background: var(--primary-light); color: var(--text-main); }
+.chat-msg-user { align-self: flex-end; background: var(--primary); color: #fff; }
+.chat-typing { color: var(--text-muted); }
+.chat-form { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--border); }
+.chat-form input {
+  flex: 1; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font: inherit; font-size: 0.9rem;
+}
+.chat-form button {
+  border: none; border-radius: 8px; padding: 0 12px; background: var(--primary); color: #fff; cursor: pointer;
+}
+.chat-form button:disabled { opacity: 0.5; cursor: default; }
+
+.app-download-box {
+  margin-top: 1.25rem; padding: 14px; border: 1px dashed var(--border); border-radius: var(--radius);
+  display: flex; align-items: center; gap: 12px;
+}
+.app-download-box p { margin: 0; font-size: 0.85rem; color: var(--text-muted); }
+.app-download-box strong { display: block; color: var(--text-main); font-size: 0.9rem; }
+.app-download-btn {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  padding: 9px 14px; border-radius: 8px; background: #16a34a; color: #fff; font-weight: 600;
+  font-size: 0.85rem; text-decoration: none;
+}
+.app-download-btn:hover { background: #15803d; }
+@media (max-width: 480px) {
+  .app-download-box { flex-direction: column; align-items: stretch; text-align: center; }
+  .app-download-btn { margin-left: 0; justify-content: center; }
+}

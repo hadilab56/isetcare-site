@@ -1,0 +1,23 @@
+# Render « Blueprint » : crée l'API Spring Boot (offre gratuite) à partir de backend/Dockerfile.
+# Les valeurs marquées sync: false sont demandées par Render lors de la création.
+services:
+  - type: web
+    name: isetcare-api
+    runtime: docker
+    plan: free
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: DB_URL
+        sync: false   # ex. jdbc:postgresql://ep-xxx.eu-central-1.aws.neon.tech/neondb?sslmode=require
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false   # ex. https://isetcare.netlify.app
+      - key: GEMINI_API_KEY
+        sync: false   # clé gratuite : https://aistudio.google.com/apikey
+      - key: JWT_SECRET
+        generateValue: true

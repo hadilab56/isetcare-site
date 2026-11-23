@@ -1,0 +1,39 @@
+server:
+  error:
+    include-message: always
+  # Render (et la plupart des hébergeurs) imposent le port via la variable PORT
+  port: ${PORT:8081}
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+  datasource:
+    # En ligne (Neon, Render...) : DB_URL=jdbc:postgresql://<hôte>/<base>?sslmode=require
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/isetcare}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgcare}
+    hikari:
+      # Les bases gratuites limitent le nombre de connexions
+      maximum-pool-size: ${DB_POOL_SIZE:5}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate.format_sql: true
+
+app:
+  upload-dir: ${UPLOAD_DIR:uploads}
+  jwt:
+    secret: ${JWT_SECRET:changez-ce-secret-par-une-longue-valeur-aleatoire-32-caracteres-min}
+    expiration-hours: 8
+  cors:
+    # Ajoutez l'adresse du site en ligne, ex. CORS_ORIGINS=https://isetcare.netlify.app
+    allowed-origins: ${CORS_ORIGINS:http://localhost:5173,http://localhost:3000}
+  # IA : créez une clé gratuite sur https://aistudio.google.com puis définissez GEMINI_API_KEY
+  # (start.bat la lit dans gemini-key.txt). Sans clé, l'analyse se fait par mots-clés.
+  gemini:
+    api-key: ${GEMINI_API_KEY:}
+    model: ${GEMINI_MODEL:gemini-3.1-flash-lite}

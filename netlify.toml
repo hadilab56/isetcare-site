@@ -1,0 +1,10 @@
+# Netlify : le site React se trouve dans isetcare-frontend/
+[build]
+  base = "isetcare-frontend"
+  command = "npm run build"
+  publish = "dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
