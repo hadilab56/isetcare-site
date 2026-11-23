@@ -2,6 +2,8 @@ package com.isetcare.config;
 
 import com.isetcare.model.*;
 import com.isetcare.repository.*;
+import com.isetcare.service.EtatSyncService;
+import com.isetcare.service.NotificationService;
 import net.datafaker.Faker;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -27,6 +29,10 @@ public class DataSeeder {
                            EquipementRepository equipements,
                            ReclamationRepository reclamations,
                            InterventionRepository interventions,
+                           AnalyseIARepository analyses,
+                           MaintenanceRepository maintenances,
+                           EtatSyncService etatSync,
+                           NotificationService notifications,
                            PasswordEncoder encoder) {
         return args -> {
             if (users.count() > 0) return;
@@ -163,79 +169,105 @@ public class DataSeeder {
                     .toList();
 
             if (!listeTechniciens.isEmpty() && !listeDeclarants.isEmpty() && !tousEquipements.isEmpty()) {
-                String[] pannes = {
-                        "Le projecteur ne s'allume plus, voyant lampe clignotant rouge.",
-                        "Impossible de se connecter au réseau filaire (pas d'adresse IP attribuée).",
-                        "Bruit anormal et fort au niveau du compresseur du climatiseur.",
-                        "Écran bleu récurrent sur le poste de travail pendant les cours pratiques.",
-                        "Bourrage papier persistant dans le bac d'alimentation de l'imprimante."
-                };
+                // Comptes de démonstration : on leur donne des réclamations pour que chaque rôle ait quelque chose à voir
+                Utilisateur techDemo = users.findByEmail("technicien@isetcare.tn").orElseThrow();
+                Utilisateur declarantDemo = users.findByEmail("enseignant@isetcare.tn").orElseThrow();
 
-                String[] diagnostics = {
-                        "Lampe du vidéoprojecteur hors service suite à une surtension, remplacement effectué.",
-                        "Câble RJ45 sectionné au niveau de la goulotte murale, nouveau sertissage réalisé.",
-                        "Manque de fluide frigorigène (fuite sur raccord) + nettoyage complet des filtres.",
-                        "Barrette de RAM défectueuse détectée par diagnostic MemTest, remplacement effectué.",
-                        "Nettoyage des galets d'entraînement et du four de fusion."
+                // Tout le cycle de vie, 4 réclamations par statut ; les plus anciennes sont les plus avancées
+                StatutReclamation[] cycle = {
+                        StatutReclamation.CLOTURE, StatutReclamation.RESOLU, StatutReclamation.EN_COURS,
+                        StatutReclamation.AFFECTEE, StatutReclamation.NOUVEAU
                 };
+                List<Equipement> melange = new ArrayList<>(tousEquipements);
+                java.util.Collections.shuffle(melange, random);
+                java.util.Set<Equipement> touches = new java.util.LinkedHashSet<>();
 
-                StatutReclamation[] statuts = {
-                        StatutReclamation.NOUVEAU,
-                        StatutReclamation.EN_COURS,
-                        StatutReclamation.RESOLU,
-                        StatutReclamation.CLOTURE
-                };
-
-                Priorite[] priorites = {
-                        Priorite.BASSE,
-                        Priorite.MOYENNE,
-                        Priorite.HAUTE,
-                        Priorite.URGENTE
-                };
-
-                for (int i = 1; i <= 20; i++) {
-                    Equipement eqAleatoire = tousEquipements.get(random.nextInt(tousEquipements.size()));
-                    Utilisateur declarantAleatoire = listeDeclarants.get(random.nextInt(listeDeclarants.size()));
-                    Utilisateur techAleatoire = listeTechniciens.get(random.nextInt(listeTechniciens.size()));
+                for (int i = 0; i < 20; i++) {
+                    Equipement eq = melange.get(i);
+                    List<Panne> possibles = pannesPour(eq.getType().getLibelle());
+                    Panne p = possibles.get(random.nextInt(possibles.size()));
+                    StatutReclamation statut = cycle[i / 4];
+                    Utilisateur declarant = i % 3 == 0 ? declarantDemo : listeDeclarants.get(random.nextInt(listeDeclarants.size()));
+                    Utilisateur tech = i % 2 == 0 ? techDemo : listeTechniciens.get(random.nextInt(listeTechniciens.size()));
+                    // CLOTURE : il y a 16 à 20 jours ... NOUVEAU : dans les 2 derniers jours
+                    int ageJours = (4 - i / 4) * 4 + random.nextInt(3);
+                    LocalDateTime creation = LocalDateTime.now().minusDays(ageJours).minusHours(random.nextInt(8));
 
                     Reclamation rec = new Reclamation();
-                    rec.setDescription(pannes[random.nextInt(pannes.length)] + " (Ticket #" + i + ")");
-                    rec.setPriorite(priorites[random.nextInt(priorites.length)]);
+                    rec.setDescription(p.description());
+                    rec.setCategorie(p.categorie());
+                    rec.setPriorite(p.priorite());
+                    rec.setStatut(statut);
+                    rec.setDateCreation(creation);
+                    rec.setEquipement(eq);
+                    rec.setDeclarant(declarant);
+                    if (statut != StatutReclamation.NOUVEAU) rec.setTechnicienAffecte(tech);
+                    rec = reclamations.save(rec);
 
-                    // On répartit les statuts
-                    StatutReclamation statutActuel = statuts[random.nextInt(statuts.length)];
-                    rec.setStatut(statutActuel);
-                    rec.setDateCreation(LocalDateTime.now().minusDays(random.nextInt(15)).minusHours(random.nextInt(24)));
-                    rec.setEquipement(eqAleatoire);
-                    rec.setDeclarant(declarantAleatoire);
+                    // Suggestion de l'IA enregistrée au moment du signalement
+                    AnalyseIA analyse = new AnalyseIA();
+                    analyse.setReclamation(rec);
+                    analyse.setCategorieSuggeree(p.categorie());
+                    analyse.setPrioriteSuggeree(p.priorite());
+                    analyse.setTypePanneProbable(p.typePanne());
+                    analyse.setScoreConfiance(0.75f + random.nextInt(20) / 100f);
+                    analyses.save(analyse);
 
-                    // Si le statut n'est pas NOUVELLE, on lui assigne un technicien
-                    if (statutActuel != StatutReclamation.NOUVEAU) {
-                        rec.setTechnicienAffecte(techAleatoire);
-                    }
-
-                    Reclamation savedRec = reclamations.save(rec);
-
-                    // Si la réclamation est EN_COURS, RESOLUE ou CLOTUREE, on crée une Intervention associée
-                    if (statutActuel != StatutReclamation.NOUVEAU) {
+                    // EN_COURS : intervention commencée ; RESOLU / CLOTURE : intervention terminée
+                    if (statut == StatutReclamation.EN_COURS || statut == StatutReclamation.RESOLU
+                            || statut == StatutReclamation.CLOTURE) {
                         Intervention inter = new Intervention();
-                        inter.setDiagnostic(diagnostics[random.nextInt(diagnostics.length)]);
-                        inter.setActionEffectuee("Intervention sur site effectuée. Vérification des paramètres et tests de bon fonctionnement.");
-                        inter.setDateDebut(savedRec.getDateCreation().plusHours(2));
-
-                        if (statutActuel == StatutReclamation.RESOLU || statutActuel == StatutReclamation.CLOTURE) {
-                            inter.setDateFin(savedRec.getDateCreation().plusHours(5));
-                            inter.setResultat("Réparé avec succès");
+                        inter.setReclamation(rec);
+                        inter.setTechnicien(tech);
+                        inter.setDiagnostic(p.diagnostic());
+                        inter.setDateDebut(creation.plusHours(20));
+                        if (statut == StatutReclamation.EN_COURS) {
+                            inter.setActionEffectuee("Diagnostic réalisé, pièce de rechange commandée.");
+                            inter.setResultat("En attente de la pièce");
+                            inter.setCout(BigDecimal.valueOf(30));
                         } else {
-                            inter.setResultat("En cours de diagnostic approfondi");
+                            inter.setActionEffectuee(p.action());
+                            inter.setDateFin(creation.plusHours(22 + random.nextInt(24)));
+                            inter.setResultat("Réparé, équipement remis en service");
+                            inter.setCout(BigDecimal.valueOf(40 + random.nextInt(260)));
                         }
-
-                        inter.setCout(BigDecimal.valueOf(50 + random.nextInt(350)));
-                        inter.setReclamation(savedRec);
-                        inter.setTechnicien(techAleatoire);
-
                         interventions.save(inter);
                     }
+
+                    // Notifications, comme le ferait l'application
+                    String ref = "Réclamation #" + rec.getId() + " (" + eq.getReference() + ")";
+                    if (statut == StatutReclamation.NOUVEAU)
+                        notifications.notifierAdmins(TypeNotification.NOUVELLE_RECLAMATION,
+                                "Nouvelle réclamation #" + rec.getId() + " (" + eq.getReference() + ") : " + p.description());
+                    else if (statut == StatutReclamation.AFFECTEE || statut == StatutReclamation.EN_COURS)
+                        notifications.notifier(tech, TypeNotification.NOUVELLE_RECLAMATION, ref + " vous a été affectée.");
+                    if (statut == StatutReclamation.RESOLU)
+                        notifications.notifier(declarant, TypeNotification.CHANGEMENT_STATUT, ref + " est résolue.");
+                    touches.add(eq);
+                }
+
+                // État des équipements : en panne / en maintenance selon leurs réclamations ouvertes
+                for (Equipement eq : touches) etatSync.synchroniser(eq);
+
+                // Maintenance préventive : réalisées, en retard, à venir (dont une dans 2 jours -> rappel)
+                int[] decalages = {-60, -30, -5, 2, 6, 14, 21, 35};
+                for (int k = 0; k < decalages.length; k++) {
+                    Equipement eq = melange.get(20 + k);
+                    MaintenancePreventive m = new MaintenancePreventive();
+                    m.setEquipement(eq);
+                    m.setTechnicien(k % 2 == 0 ? techDemo : listeTechniciens.get(random.nextInt(listeTechniciens.size())));
+                    m.setFrequenceMois(eq.getType().getFrequenceMaintenanceMois());
+                    m.setDatePlanifiee(LocalDate.now().plusDays(decalages[k]));
+                    if (decalages[k] <= -30) {
+                        m.setStatut(StatutMaintenance.REALISEE);
+                        m.setDateRealisation(m.getDatePlanifiee().plusDays(1));
+                        m.setRapport("Nettoyage, contrôle général et tests : RAS.");
+                    } else if (decalages[k] < 0) {
+                        m.setStatut(StatutMaintenance.EN_RETARD);
+                    } else {
+                        m.setStatut(StatutMaintenance.PLANIFIEE);
+                    }
+                    maintenances.save(m);
                 }
             }
 
@@ -293,6 +325,54 @@ public class DataSeeder {
         e.setPrixAchat(prix);
         e.setSalle(salle);
         e.setType(type);
+        e.setQrCode("ISETCARE:" + ref);
         return e;
+    }
+
+    /** Une panne type, cohérente avec le type d'équipement : symptôme signalé, puis diagnostic et réparation. */
+    private record Panne(String description, String categorie, Priorite priorite,
+                         String typePanne, String diagnostic, String action) {}
+
+    private static List<Panne> pannesPour(String libelleType) {
+        return switch (libelleType) {
+            case "PC de laboratoire" -> List.of(
+                    new Panne("Écran bleu récurrent pendant les travaux pratiques.", "Informatique", Priorite.MOYENNE,
+                            "Mémoire vive défectueuse", "Barrette de RAM défectueuse détectée par MemTest86.",
+                            "Remplacement de la barrette de RAM 8 Go, tests de stabilité concluants."),
+                    new Panne("Le poste ne démarre plus, aucun voyant ne s'allume.", "Informatique", Priorite.HAUTE,
+                            "Alimentation hors service", "Bloc d'alimentation grillé.",
+                            "Remplacement du bloc d'alimentation 300 W, démarrage vérifié."),
+                    new Panne("Pas d'accès au réseau : le poste n'obtient pas d'adresse IP.", "Réseau", Priorite.MOYENNE,
+                            "Câble réseau endommagé", "Câble RJ45 sectionné dans la goulotte murale.",
+                            "Nouveau câble et sertissage, test de connectivité réussi."));
+            case "Imprimante" -> List.of(
+                    new Panne("Bourrage papier persistant dans le bac d'alimentation.", "Impression", Priorite.BASSE,
+                            "Galets d'entraînement usés", "Galets d'entraînement lisses et encrassés.",
+                            "Nettoyage puis remplacement des galets, 50 pages de test sans bourrage."),
+                    new Panne("Impressions pâles avec des traînées grises.", "Impression", Priorite.BASSE,
+                            "Toner épuisé", "Toner presque vide et tambour encrassé.",
+                            "Remplacement du toner et nettoyage du tambour."));
+            case "Vidéoprojecteur / Datashow" -> List.of(
+                    new Panne("Le projecteur ne s'allume plus, le voyant lampe clignote en rouge.", "Audiovisuel", Priorite.HAUTE,
+                            "Lampe grillée", "Lampe hors service après une surtension.",
+                            "Remplacement de la lampe et remise à zéro du compteur d'heures."),
+                    new Panne("Image floue et couleurs jaunâtres pendant les cours.", "Audiovisuel", Priorite.MOYENNE,
+                            "Surchauffe du projecteur", "Filtre à air colmaté, surchauffe du bloc optique.",
+                            "Nettoyage du filtre et réglage de la mise au point."));
+            case "Climatiseur" -> List.of(
+                    new Panne("Bruit anormal et fort au niveau du compresseur.", "Climatisation", Priorite.MOYENNE,
+                            "Compresseur mal fixé", "Fixations du compresseur desserrées.",
+                            "Resserrage et pose de silentblocs neufs."),
+                    new Panne("Le climatiseur souffle de l'air tiède, il ne refroidit plus.", "Climatisation", Priorite.HAUTE,
+                            "Manque de fluide frigorigène", "Fuite sur un raccord du circuit frigorifique.",
+                            "Réparation du raccord, recharge en R32 et nettoyage des filtres."),
+                    new Panne("Odeur de brûlé et étincelles près du boîtier électrique.", "Électricité", Priorite.URGENTE,
+                            "Court-circuit électrique", "Bornier d'alimentation carbonisé.",
+                            "Remplacement du bornier et contrôle du disjoncteur."));
+            default -> List.of(
+                    new Panne("Plusieurs postes du laboratoire n'ont plus de réseau.", "Réseau", Priorite.HAUTE,
+                            "Port du switch défaillant", "Port uplink défaillant sur le switch.",
+                            "Basculement sur un port de secours et mise à jour du firmware."));
+        };
     }
 }
