@@ -1,0 +1,563 @@
+<title>ISETCare UML</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column of numbered-free sections, each a caption + diagram sheet + key notes; ISETCare brand blue as the accent. */
+:root {
+  --bg: #f4f6f9;
+  --sheet: #ffffff;
+  --fg: #0f1b2b;
+  --muted: #566476;
+  --line: #d9e0e8;
+  --accent: #164e87;
+  --accent-soft: #e6eef7;
+  --chip-web: #e8f1fb; --chip-web-fg: #164e87;
+  --chip-app: #eaf6ee; --chip-app-fg: #1f6b3a;
+  --chip-api: #fbf1e6; --chip-api-fg: #8a4b12;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e141c; --sheet: #151d28; --fg: #e4ebf3; --muted: #9aa8b8; --line: #263243;
+    --accent: #7fb2e8; --accent-soft: #1b2a3c;
+    --chip-web: #1b2a3c; --chip-web-fg: #9cc4ee;
+    --chip-app: #17291f; --chip-app-fg: #8fd3a7;
+    --chip-api: #2d2216; --chip-api-fg: #e9b27a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e141c; --sheet: #151d28; --fg: #e4ebf3; --muted: #9aa8b8; --line: #263243;
+  --accent: #7fb2e8; --accent-soft: #1b2a3c;
+  --chip-web: #1b2a3c; --chip-web-fg: #9cc4ee;
+  --chip-app: #17291f; --chip-app-fg: #8fd3a7;
+  --chip-api: #2d2216; --chip-api-fg: #e9b27a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 2.5rem 4rem;
+}
+.wrap { max-width: 1040px; margin: 0 auto; display: grid; gap: 2.75rem; }
+header { display: grid; gap: .75rem; }
+.eyebrow { font-family: var(--font-mono); font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font-size: clamp(1.8rem, 4vw, 2.5rem); line-height: 1.15; margin: 0; text-wrap: balance; font-weight: 700; }
+h2 { font-size: 1.35rem; margin: 0; text-wrap: balance; }
+h3 { font-size: 1rem; margin: 0; }
+p { margin: 0; max-width: 68ch; }
+.lead { color: var(--muted); font-size: 1.05rem; }
+nav { display: flex; flex-wrap: wrap; gap: .5rem; }
+nav a {
+  font-size: .85rem; text-decoration: none; color: var(--accent); background: var(--accent-soft);
+  padding: .3rem .7rem; border-radius: 999px;
+}
+nav a:hover, nav a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+section { display: grid; gap: 1rem; scroll-margin-top: 1rem; }
+.sheet {
+  background: var(--sheet); border: 1px solid var(--line); border-radius: 10px;
+  padding: 1.25rem; overflow-x: auto; min-width: 0;
+}
+.sheet pre.mermaid { margin: 0; background: transparent; text-align: center; min-width: 640px; }
+.sheet.narrow pre.mermaid { min-width: 480px; }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: .75rem 1.5rem; }
+.notes div { min-width: 0; }
+.notes h3 { font-size: .9rem; margin-bottom: .2rem; }
+.notes p { font-size: .9rem; color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: .86em; }
+.chip { display: inline-block; font-family: var(--font-mono); font-size: .75rem; padding: .1rem .5rem; border-radius: 4px; white-space: nowrap; }
+.chip.web { background: var(--chip-web); color: var(--chip-web-fg); }
+.chip.app { background: var(--chip-app); color: var(--chip-app-fg); }
+.chip.api { background: var(--chip-api); color: var(--chip-api-fg); }
+.table-wrap { overflow-x: auto; background: var(--sheet); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: .88rem; min-width: 620px; }
+th, td { text-align: left; padding: .55rem .85rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+tr:last-child td { border-bottom: none; }
+td code { white-space: nowrap; }
+footer { color: var(--muted); font-size: .85rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+@media (max-width: 520px) { body { padding-block: 1.5rem 3rem; } .sheet { padding: .75rem; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">ISETCare · GMAO · ISET de Radès</div>
+    <h1>UML model of the ISETCare website and mobile app</h1>
+    <p class="lead">Six diagrams drawn from the real code: the React website, the Android app, the Spring Boot API and the PostgreSQL database they share. Names in the diagrams are the ones used in the code.</p>
+    <nav aria-label="Diagrams">
+      <a href="#architecture">Deployment</a>
+      <a href="#usecases">Use cases</a>
+      <a href="#classes">Class diagram</a>
+      <a href="#states">State machines</a>
+      <a href="#sequence-report">Sequence: report a breakdown</a>
+      <a href="#sequence-repair">Sequence: repair</a>
+      <a href="#components">Components</a>
+      <a href="#api">API endpoints</a>
+    </nav>
+  </header>
+
+  <section id="architecture">
+    <h2>Deployment diagram</h2>
+    <p>Where each part runs. The website and the app never talk to the database or to Gemini directly: everything goes through the API, which checks the user's JWT token and role first.</p>
+    <div class="sheet">
+<pre class="mermaid">
+flowchart LR
+  subgraph Clients
+    B["Web browser<br/>React 18 + Vite"]
+    M["Android phone<br/>ISETCare app (Kotlin/Java, Retrofit)"]
+  end
+  subgraph Netlify["Netlify (free)"]
+    W["Static website<br/>isetcare-site-6vj3.netlify.app"]
+  end
+  subgraph Render["Render (free, Docker)"]
+    A["Spring Boot 3.3 API · Java 17<br/>isetcare-api.onrender.com<br/>JWT security · scheduler"]
+    U[("uploads/<br/>report photos")]
+  end
+  subgraph Neon["Neon (free)"]
+    D[("PostgreSQL<br/>database neondb")]
+  end
+  G["Google Gemini API<br/>(AI analysis + chat)"]
+  R["GitHub Releases<br/>ISETCare.apk"]
+  B -- "loads pages" --> W
+  B -- "HTTPS JSON /api/**" --> A
+  M -- "HTTPS JSON /api/mobile/** · /api/ia/**" --> A
+  A -- "JDBC / JPA" --> D
+  A --- U
+  A -- "HTTPS, key stays on server" --> G
+  B -. "Télécharger button" .-> R
+  R -. "install APK" .-> M
+</pre>
+    </div>
+    <div class="notes">
+      <div><h3>One backend, two clients</h3><p>A breakdown reported from the phone appears on the website at once, because both write to the same API and database.</p></div>
+      <div><h3>Free-tier behaviour</h3><p>The Render server sleeps after 15 minutes without traffic; the first request then takes about a minute. Photos in <code>uploads/</code> are lost when it restarts.</p></div>
+    </div>
+  </section>
+
+  <section id="usecases">
+    <h2>Use case diagram</h2>
+    <p>What each role can do, as enforced by <code>SecurityConfig</code> and the controllers. Every actor first logs in. <span class="chip web">web</span> <span class="chip app">app</span> mark where a use case is available.</p>
+    <div class="sheet">
+<pre class="mermaid">
+flowchart LR
+  DEC(["👤 Déclarant<br/>(teacher, staff)"])
+  TEC(["👤 Technicien"])
+  ADM(["👤 Administrateur"])
+  SYS(["⚙ Scheduler<br/>(every hour)"])
+  subgraph ISETCare
+    direction TB
+    UC0(("Log in / edit profile"))
+    UC1(("Report a breakdown<br/>form or QR scan"))
+    UC2(("Get AI suggestion<br/>category · priority · cause"))
+    UC3(("Track my reports"))
+    UC4(("Browse equipment"))
+    UC5(("Read notifications"))
+    UC6(("Chat with AI assistant"))
+    UC7(("Take charge of a report<br/>AFFECTEE → EN_COURS"))
+    UC8(("Record an intervention<br/>diagnosis · action · cost"))
+    UC9(("Mark report resolved"))
+    UC10(("Carry out preventive maintenance"))
+    UC11(("View equipment history"))
+    UC12(("Assign a technician"))
+    UC13(("Set priority / close report"))
+    UC14(("Manage rooms, types,<br/>equipment, users"))
+    UC15(("Plan preventive maintenance"))
+    UC16(("Statistics & AI<br/>repair / replace advice"))
+    UC17(("Flag late maintenance,<br/>send reminders"))
+  end
+  DEC --- UC0 & UC1 & UC3 & UC4 & UC5 & UC6
+  UC1 -. "include" .-> UC2
+  TEC --- UC0 & UC7 & UC8 & UC9 & UC10 & UC11 & UC5
+  UC9 -. "requires ≥ 1" .-> UC8
+  ADM --- UC0 & UC12 & UC13 & UC14 & UC15 & UC16 & UC11 & UC5
+  SYS --- UC17
+</pre>
+    </div>
+    <div class="notes">
+      <div><h3>Déclarant <span class="chip web">web</span> <span class="chip app">app</span></h3><p>Creates reports (<code>POST /api/reclamations</code> is reserved to this role) and only ever sees their own.</p></div>
+      <div><h3>Technicien <span class="chip web">web</span> <span class="chip app">app</span></h3><p>Works only on reports assigned to them. A report cannot be resolved without at least one intervention.</p></div>
+      <div><h3>Administrateur <span class="chip web">web</span> <span class="chip app">app</span></h3><p>Owns assignment, priority and closing, all reference data, maintenance planning and statistics.</p></div>
+    </div>
+  </section>
+
+  <section id="classes">
+    <h2>Class diagram (domain model)</h2>
+    <p>The JPA entities in <code>backend/…/model</code>, i.e. the tables in PostgreSQL. The three roles are stored in one table, <code>utilisateurs</code> (single-table inheritance): role-specific fields stay empty for the other roles.</p>
+    <div class="sheet">
+<pre class="mermaid">
+classDiagram
+  direction LR
+  class Utilisateur {
+    +Long id
+    +String nom
+    +String prenom
+    +String email
+    -String motDePasse
+    +String telephone
+    +Role role
+    +boolean actif
+  }
+  class Declarant {
+    +String departement
+    +String fonction
+  }
+  class Technicien {
+    +String specialite
+    +Boolean disponible
+  }
+  class Administrateur {
+    +String service
+  }
+  Utilisateur <|-- Declarant
+  Utilisateur <|-- Technicien
+  Utilisateur <|-- Administrateur
+
+  class Salle {
+    +Long id
+    +String nom
+    +String batiment
+    +Integer etage
+  }
+  class TypeEquipement {
+    +Long id
+    +String libelle
+    +Integer frequenceMaintenanceMois = 6
+    +Integer dureeVieEstimeeMois
+  }
+  class Equipement {
+    +Long id
+    +String reference
+    +String marque
+    +String modele
+    +String numeroSerie
+    +LocalDate dateAcquisition
+    +BigDecimal prixAchat
+    +EtatEquipement etat
+    +String qrCode
+  }
+  class Reclamation {
+    +Long id
+    +String description
+    +String photo
+    +LocalDateTime dateCreation
+    +StatutReclamation statut
+    +Priorite priorite
+    +String categorie
+  }
+  class AnalyseIA {
+    +Long id
+    +String categorieSuggeree
+    +Priorite prioriteSuggeree
+    +String typePanneProbable
+    +Float scoreConfiance
+  }
+  class Intervention {
+    +Long id
+    +String diagnostic
+    +String actionEffectuee
+    +LocalDateTime dateDebut
+    +LocalDateTime dateFin
+    +BigDecimal cout
+    +String resultat
+  }
+  class MaintenancePreventive {
+    +Long id
+    +LocalDate datePlanifiee
+    +LocalDate dateRealisation
+    +Integer frequenceMois
+    +StatutMaintenance statut
+    +String rapport
+  }
+  class Notification {
+    +Long id
+    +TypeNotification type
+    +String message
+    +LocalDateTime dateEnvoi
+    +boolean lue
+  }
+  class RecommandationRemplacement {
+    +Long id
+    +Integer nbPannes
+    +Integer nbInterventions
+    +BigDecimal coutCumuleReparations
+    +BigDecimal coutRemplacementEstime
+    +Integer dureeIndisponibiliteJours
+    +Decision decision
+    +LocalDate dateAnalyse
+  }
+
+  Equipement "0..*" --> "0..1" Salle : installé dans
+  Equipement "0..*" --> "0..1" TypeEquipement : est de type
+  Reclamation "0..*" --> "1" Equipement : concerne
+  Reclamation "0..*" --> "1" Declarant : déclarée par
+  Reclamation "0..*" --> "0..1" Technicien : affectée à
+  AnalyseIA "0..1" --> "1" Reclamation : analyse
+  Intervention "0..*" --> "1" Reclamation : traite
+  Intervention "0..*" --> "0..1" Technicien : réalisée par
+  MaintenancePreventive "0..*" --> "1" Equipement : planifiée sur
+  MaintenancePreventive "0..*" --> "0..1" Technicien : confiée à
+  Notification "0..*" --> "1" Utilisateur : destinataire
+  RecommandationRemplacement "0..*" --> "1" Equipement : évalue
+
+  class Role {
+    &lt;&lt;enumeration&gt;&gt;
+    DECLARANT
+    TECHNICIEN
+    ADMINISTRATEUR
+  }
+  class EtatEquipement {
+    &lt;&lt;enumeration&gt;&gt;
+    EN_SERVICE
+    EN_PANNE
+    EN_MAINTENANCE
+    HORS_SERVICE
+  }
+  class StatutReclamation {
+    &lt;&lt;enumeration&gt;&gt;
+    NOUVEAU
+    AFFECTEE
+    EN_COURS
+    RESOLU
+    CLOTURE
+  }
+  class Priorite {
+    &lt;&lt;enumeration&gt;&gt;
+    BASSE
+    MOYENNE
+    HAUTE
+    URGENTE
+  }
+  class StatutMaintenance {
+    &lt;&lt;enumeration&gt;&gt;
+    PLANIFIEE
+    EN_RETARD
+    REALISEE
+    ANNULEE
+  }
+  class TypeNotification {
+    &lt;&lt;enumeration&gt;&gt;
+    NOUVELLE_RECLAMATION
+    CHANGEMENT_STATUT
+    RAPPEL_MAINTENANCE
+    RETARD
+    PANNES_FREQUENTES
+  }
+  class Decision {
+    &lt;&lt;enumeration&gt;&gt;
+    EN_ATTENTE
+    REMPLACER
+    REPARER
+  }
+</pre>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Class</th><th>Database table</th><th>Role in the system</th></tr></thead>
+        <tbody>
+          <tr><td>Utilisateur</td><td><code>utilisateurs</code></td><td>Every account; <code>role</code> decides which menus and API calls are allowed.</td></tr>
+          <tr><td>Salle, TypeEquipement</td><td><code>salles</code>, <code>types_equipement</code></td><td>Reference data managed by the administrator.</td></tr>
+          <tr><td>Equipement</td><td><code>equipements</code></td><td>The inventory. Its <code>qrCode</code> is what the app scans; <code>etat</code> follows its open reports.</td></tr>
+          <tr><td>Reclamation</td><td><code>reclamations</code></td><td>A breakdown report, the centre of the workflow.</td></tr>
+          <tr><td>AnalyseIA</td><td><code>analyses_ia</code></td><td>The AI's suggestion stored with the report (one at most).</td></tr>
+          <tr><td>Intervention</td><td><code>interventions</code></td><td>Repair work and its cost; feeds the repair/replace advice.</td></tr>
+          <tr><td>MaintenancePreventive</td><td><code>maintenances_preventives</code></td><td>Planned servicing, checked every hour by the scheduler.</td></tr>
+          <tr><td>Notification</td><td><code>notifications</code></td><td>In-app messages (bell icon on the site, screen in the app).</td></tr>
+          <tr><td>RecommandationRemplacement</td><td><code>recommandations_remplacement</code></td><td>The administrator's repair / replace decision for a piece of equipment.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="states">
+    <h2>State machine diagrams</h2>
+    <p>The allowed status changes, as coded in <code>ReclamationController</code>, <code>InterventionService</code> and <code>MaintenanceScheduler</code>.</p>
+    <div class="sheet narrow">
+<pre class="mermaid">
+stateDiagram-v2
+  direction LR
+  [*] --> NOUVEAU : déclarant reports (web/app)
+  NOUVEAU --> AFFECTEE : admin assigns a technician
+  AFFECTEE --> EN_COURS : technician takes charge
+  AFFECTEE --> EN_COURS : first intervention recorded
+  EN_COURS --> RESOLU : technician resolves (≥ 1 intervention)
+  NOUVEAU --> CLOTURE : admin closes
+  AFFECTEE --> CLOTURE : admin closes
+  EN_COURS --> CLOTURE : admin closes
+  RESOLU --> CLOTURE : admin closes
+  CLOTURE --> [*]
+  note right of RESOLU
+    Every change notifies the déclarant
+    (CHANGEMENT_STATUT)
+  end note
+</pre>
+    </div>
+    <div class="sheet narrow">
+<pre class="mermaid">
+stateDiagram-v2
+  direction LR
+  [*] --> PLANIFIEE : admin plans
+  PLANIFIEE --> EN_RETARD : scheduler, date passed
+  PLANIFIEE --> REALISEE : technician carries out
+  EN_RETARD --> REALISEE : technician carries out
+  PLANIFIEE --> ANNULEE : admin cancels
+  EN_RETARD --> ANNULEE : admin cancels
+  REALISEE --> [*]
+  ANNULEE --> [*]
+  note right of PLANIFIEE
+    Reminder to the technician
+    3 days before (RAPPEL_MAINTENANCE)
+  end note
+</pre>
+    </div>
+  </section>
+
+  <section id="sequence-report">
+    <h2>Sequence diagram: report a breakdown</h2>
+    <p>The main flow, from the website's "Signaler une panne" page. The app follows the same path through <code>/api/ia/analyser</code> and <code>/api/mobile/reclamations</code>, usually after scanning the equipment's QR code.</p>
+    <div class="sheet">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  actor D as Déclarant
+  participant W as Website (React)
+  participant A as API (Spring Boot)
+  participant IA as IaService
+  participant G as Gemini
+  participant DB as PostgreSQL
+  participant N as NotificationService
+  D->>W: Describes the problem, picks the equipment
+  W->>A: POST /api/ai/analyze {description, equipementId}
+  A->>IA: analyser(description, type)
+  alt GEMINI_API_KEY set
+    IA->>G: generateContent (JSON prompt)
+    G-->>IA: categorie, typePanne, priorite, confiance
+  else no key or Gemini error
+    IA->>IA: RulesClassifier (keywords)
+  end
+  Note over IA: Smoke, sparks, burning smell → URGENTE, always
+  IA-->>A: AiAnalysis
+  A-->>W: suggestion
+  W-->>D: Pop-up: category, priority, probable cause
+  D->>W: Confirms and sends (optional photo)
+  W->>A: POST /api/reclamations (multipart, JWT)
+  A->>DB: INSERT reclamation (NOUVEAU) + analyse_ia
+  A->>DB: equipement.etat = EN_PANNE
+  A->>N: notifierAdmins(NOUVELLE_RECLAMATION)
+  opt Repeated breakdowns on this equipment
+    A->>N: notifierAdmins(PANNES_FREQUENTES)
+  end
+  N->>DB: INSERT notifications
+  A-->>W: 201 Created
+  W-->>D: Report listed under "Mes réclamations"
+</pre>
+    </div>
+  </section>
+
+  <section id="sequence-repair">
+    <h2>Sequence diagram: assignment and repair</h2>
+    <p>What happens after the report exists, across the three roles. The technician can do steps 4 to 9 from the website or from the app.</p>
+    <div class="sheet">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  actor AD as Administrateur
+  actor T as Technicien
+  actor D as Déclarant
+  participant A as API
+  participant DB as PostgreSQL
+  AD->>A: PATCH /api/reclamations/{id}/affectation {technicienId}
+  A->>DB: technicienAffecte = T, statut = AFFECTEE
+  A-->>T: Notification NOUVELLE_RECLAMATION
+  T->>A: PATCH /api/reclamations/{id}/statut EN_COURS
+  A-->>D: Notification CHANGEMENT_STATUT
+  T->>A: POST /api/reclamations/{id}/interventions {diagnostic, action, cout}
+  A->>DB: INSERT intervention
+  T->>A: PATCH /api/reclamations/{id}/statut RESOLU
+  A->>DB: check ≥ 1 intervention, statut = RESOLU, equipment state synced
+  A-->>D: Notification CHANGEMENT_STATUT
+  AD->>A: PATCH /api/reclamations/{id}/cloture
+  A->>DB: statut = CLOTURE
+  A-->>D: Notification CHANGEMENT_STATUT
+  opt Equipment keeps failing
+    AD->>A: POST /api/ai/recommend-replacement {equipementId}
+    A-->>AD: REPARER / SURVEILLER / REMPLACER with reasons (cost ratio, breakdowns in 12 months, age)
+  end
+</pre>
+    </div>
+  </section>
+
+  <section id="components">
+    <h2>Component diagram</h2>
+    <p>How the code is organised in each of the three projects, and which part calls which.</p>
+    <div class="sheet">
+<pre class="mermaid">
+flowchart TB
+  subgraph WEB["isetcare-frontend (React + TypeScript)"]
+    direction TB
+    WP["pages/<br/>Login · Dashboard · Equipements · EquipementDetail<br/>Reclamations · ReclamationNew · ReclamationDetail<br/>Interventions · Maintenances · Salles · Types<br/>Users · Statistiques · Notifications · Profile"]
+    WC["components/<br/>Layout · ChatWidget · EquipementForm · QrCodeView<br/>MaintenanceCalendar · ReplacementAdvisor · …"]
+    WA["api/ (axios client + JWT)<br/>ai · reclamations · materiel · maintenances<br/>notifications · stats · suivi"]
+    WX["auth/<br/>AuthContext · ProtectedRoute (role check)"]
+    WP --> WC --> WA
+    WP --> WX
+  end
+  subgraph MOB["ISETCare Android app"]
+    direction TB
+    AU["ui/<br/>LoginActivity · MainActivity<br/>(Home · Scan · Suivi · Agenda fragments)<br/>Equipement · Signaler · Reclamation<br/>Intervention · Notifications activities"]
+    AN["network/<br/>ApiClient · IsetCareApi (Retrofit) · Dtos"]
+    AD["data/<br/>DataStore (local cache) · Formats"]
+    AI2["ai/<br/>IncidentClassifier · ReplacementAdvisor"]
+    AM["model/<br/>Equipement · Reclamation · Intervention · …"]
+    AU --> AN
+    AU --> AD
+    AU --> AI2
+    AN --> AM
+    AD --> AM
+  end
+  subgraph API["backend (Spring Boot)"]
+    direction TB
+    SC["security/<br/>JwtAuthFilter · JwtService · SecurityConfig (roles)"]
+    CT["controller/<br/>Auth · Reclamation · Intervention · Equipement · Salle<br/>TypeEquipement · Maintenance · Notification · User<br/>Stats · Ia · Mobile · Health"]
+    SV["service/<br/>IaService · RulesClassifier · NotificationService<br/>InterventionService · EtatSyncService · AccessService<br/>MaintenanceScheduler · FileStorageService · MobileMapper"]
+    RP["repository/<br/>Spring Data JPA, one per entity"]
+    MD["model/ + dto/<br/>JPA entities · request/response records"]
+    SC --> CT --> SV --> RP --> MD
+    CT --> RP
+  end
+  WA -- "REST /api/**" --> SC
+  AN -- "REST /api/mobile/** · /api/ia/**" --> SC
+  RP --> PG[("PostgreSQL")]
+  SV --> GM["Gemini API"]
+</pre>
+    </div>
+  </section>
+
+  <section id="api">
+    <h2>API endpoints</h2>
+    <p>The REST interface between the clients and the server. <span class="chip web">web</span> and <span class="chip app">app</span> show who calls it; all routes except login and health need a valid token.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Area</th><th>Routes</th><th>Allowed roles</th><th>Used by</th></tr></thead>
+        <tbody>
+          <tr><td>Authentication</td><td><code>POST /api/auth/login</code> · <code>GET /me</code> · <code>PUT /profile</code> · <code>PUT /password</code></td><td>Anyone (login), then logged-in users</td><td><span class="chip web">web</span> <span class="chip app">app</span></td></tr>
+          <tr><td>Reports</td><td><code>POST /api/reclamations</code> · <code>GET /api/reclamations[/{id}]</code> · <code>GET /{id}/photo</code></td><td>Create: déclarant · read: logged in (own reports only for déclarants)</td><td><span class="chip web">web</span></td></tr>
+          <tr><td>Report workflow</td><td><code>PATCH /{id}/affectation</code> · <code>/priorite</code> · <code>/cloture</code> · <code>/statut</code></td><td>Admin; <code>/statut</code>: technician</td><td><span class="chip web">web</span></td></tr>
+          <tr><td>Interventions</td><td><code>GET|POST /api/reclamations/{id}/interventions</code> · <code>GET /api/interventions</code></td><td>Technician (write), admin + technician (read)</td><td><span class="chip web">web</span></td></tr>
+          <tr><td>Equipment</td><td><code>/api/equipements</code> CRUD · <code>PATCH /{id}/etat</code> · <code>GET /{id}/historique</code> · <code>/{id}/decisions</code></td><td>Read: logged in · write and decisions: admin · history: admin + technician</td><td><span class="chip web">web</span></td></tr>
+          <tr><td>Reference data</td><td><code>/api/salles</code> · <code>/api/types</code> · <code>/api/users</code> (+ <code>PATCH /{id}/actif</code>)</td><td>Read: logged in · write: admin</td><td><span class="chip web">web</span></td></tr>
+          <tr><td>Maintenance</td><td><code>/api/maintenances</code> CRUD · <code>PATCH /{id}/annuler</code> · <code>PATCH /{id}/realiser</code></td><td>Admin; realise: technician</td><td><span class="chip web">web</span></td></tr>
+          <tr><td>Notifications</td><td><code>GET /api/notifications</code> · <code>/non-lues</code> · <code>PATCH /{id}/lue</code> · <code>PATCH /lues</code></td><td>Logged in (own only)</td><td><span class="chip web">web</span></td></tr>
+          <tr><td>Statistics</td><td><code>GET /api/stats</code></td><td>Admin</td><td><span class="chip web">web</span></td></tr>
+          <tr><td>AI</td><td><code>POST /api/ai/analyze</code> · <code>/api/ai/chat</code> · <code>/api/ai/recommend-replacement</code></td><td>Logged in; replacement advice: admin</td><td><span class="chip web">web</span></td></tr>
+          <tr><td>Mobile</td><td><code>GET /api/mobile/sync</code> · <code>POST /reclamations</code> · <code>PUT /reclamations/{id}/affectation</code> · <code>POST /interventions</code> · <code>PUT /maintenances/{id}/realisation</code> · <code>PUT /notifications/{id}/lue</code> · <code>POST /api/ia/analyser</code></td><td>Logged in; role checked inside <code>MobileController</code></td><td><span class="chip app">app</span></td></tr>
+          <tr><td>Health</td><td><code>GET /api/health</code></td><td>Public</td><td><span class="chip api">Render</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>Generated from the source code of <span class="mono">hadilab56/isetcare-site</span> (backend + React site) and <span class="mono">hadilab56/ISETCare</span> (Android), November 2026.</footer>
+</div>
