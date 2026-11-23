@@ -8,3 +8,4 @@ uploads/
 *.iml
 .vscode/
 gemini-key.txt
+*.apk
