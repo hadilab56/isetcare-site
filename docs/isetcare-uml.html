@@ -3,7 +3,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: one reading column of numbered-free sections, each a caption + diagram sheet + key notes; ISETCare brand blue as the accent. */
+/* Layout: une colonne de lecture ; chaque section = titre + texte + planche du diagramme + notes. Accent = bleu ISETCare. */
 :root {
   --bg: #f4f6f9;
   --sheet: #ffffff;
@@ -15,6 +15,7 @@
   --chip-web: #e8f1fb; --chip-web-fg: #164e87;
   --chip-app: #eaf6ee; --chip-app-fg: #1f6b3a;
   --chip-api: #fbf1e6; --chip-api-fg: #8a4b12;
+  --g-acteur: #dbe9fb; --g-materiel: #fde3c8; --g-traitement: #d9f2df; --g-ia: #e9defa; --g-notif: #fff4bf; --g-ink: #1a2230;
   --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
 }
@@ -61,7 +62,7 @@ section { display: grid; gap: 1rem; scroll-margin-top: 1rem; }
   background: var(--sheet); border: 1px solid var(--line); border-radius: 10px;
   padding: 1.25rem; overflow-x: auto; min-width: 0;
 }
-.sheet pre.mermaid { margin: 0; background: transparent; text-align: center; min-width: 640px; }
+.sheet pre.mermaid { margin: 0; background: transparent; text-align: center; min-width: 680px; }
 .sheet.narrow pre.mermaid { min-width: 480px; }
 .notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: .75rem 1.5rem; }
 .notes div { min-width: 0; }
@@ -72,6 +73,9 @@ code, .mono { font-family: var(--font-mono); font-size: .86em; }
 .chip.web { background: var(--chip-web); color: var(--chip-web-fg); }
 .chip.app { background: var(--chip-app); color: var(--chip-app-fg); }
 .chip.api { background: var(--chip-api); color: var(--chip-api-fg); }
+.legend { display: flex; flex-wrap: wrap; gap: .5rem 1rem; font-size: .85rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: .4rem; }
+.legend i { width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--line); display: inline-block; }
 .table-wrap { overflow-x: auto; background: var(--sheet); border: 1px solid var(--line); border-radius: 10px; }
 table { border-collapse: collapse; width: 100%; font-size: .88rem; min-width: 620px; }
 th, td { text-align: left; padding: .55rem .85rem; border-bottom: 1px solid var(--line); vertical-align: top; }
@@ -85,235 +89,267 @@ footer { color: var(--muted); font-size: .85rem; border-top: 1px solid var(--lin
 <div class="wrap">
   <header>
     <div class="eyebrow">ISETCare · GMAO · ISET de Radès</div>
-    <h1>UML model of the ISETCare website and mobile app</h1>
-    <p class="lead">Six diagrams drawn from the real code: the React website, the Android app, the Spring Boot API and the PostgreSQL database they share. Names in the diagrams are the ones used in the code.</p>
-    <nav aria-label="Diagrams">
-      <a href="#architecture">Deployment</a>
-      <a href="#usecases">Use cases</a>
-      <a href="#classes">Class diagram</a>
-      <a href="#states">State machines</a>
-      <a href="#sequence-report">Sequence: report a breakdown</a>
-      <a href="#sequence-repair">Sequence: repair</a>
-      <a href="#components">Components</a>
-      <a href="#api">API endpoints</a>
+    <h1>Modélisation UML du site web et de l'application mobile ISETCare</h1>
+    <p class="lead">Diagrammes établis à partir du code réel (site React, application Android, API Spring Boot, base PostgreSQL) et alignés sur le document « Product Backlog et Diagramme de classes » : mêmes acteurs, mêmes classes, mêmes associations, mêmes user stories (US01 à US38).</p>
+    <nav aria-label="Diagrammes">
+      <a href="#deploiement">Déploiement</a>
+      <a href="#cas">Cas d'utilisation</a>
+      <a href="#classes">Diagramme de classes</a>
+      <a href="#ecarts">Écarts modèle / code</a>
+      <a href="#etats">Diagrammes d'états</a>
+      <a href="#seq-signaler">Séquence : signaler une panne</a>
+      <a href="#seq-traiter">Séquence : traitement</a>
+      <a href="#composants">Composants</a>
+      <a href="#api">API REST</a>
     </nav>
   </header>
 
-  <section id="architecture">
-    <h2>Deployment diagram</h2>
-    <p>Where each part runs. The website and the app never talk to the database or to Gemini directly: everything goes through the API, which checks the user's JWT token and role first.</p>
+  <section id="deploiement">
+    <h2>Diagramme de déploiement</h2>
+    <p>Où s'exécute chaque partie. Le site et l'application ne contactent jamais la base ni Gemini directement : tout passe par l'API commune (US37), qui vérifie le jeton JWT et le rôle (US38).</p>
     <div class="sheet">
 <pre class="mermaid">
 flowchart LR
   subgraph Clients
-    B["Web browser<br/>React 18 + Vite"]
-    M["Android phone<br/>ISETCare app (Kotlin/Java, Retrofit)"]
+    B["Navigateur web<br/>React 18 + Vite"]
+    M["Téléphone Android<br/>application ISETCare (Retrofit)"]
   end
-  subgraph Netlify["Netlify (free)"]
-    W["Static website<br/>isetcare-site-6vj3.netlify.app"]
+  subgraph Netlify["Netlify (gratuit)"]
+    W["Site statique<br/>isetcare-site-6vj3.netlify.app"]
   end
-  subgraph Render["Render (free, Docker)"]
-    A["Spring Boot 3.3 API · Java 17<br/>isetcare-api.onrender.com<br/>JWT security · scheduler"]
-    U[("uploads/<br/>report photos")]
+  subgraph Render["Render (gratuit, Docker)"]
+    A["API Spring Boot 3.3 · Java 17<br/>isetcare-api.onrender.com<br/>sécurité JWT · tâches planifiées"]
+    U[("uploads/<br/>photos des réclamations")]
   end
-  subgraph Neon["Neon (free)"]
-    D[("PostgreSQL<br/>database neondb")]
+  subgraph Neon["Neon (gratuit)"]
+    D[("PostgreSQL<br/>base neondb")]
   end
-  G["Google Gemini API<br/>(AI analysis + chat)"]
+  G["API Google Gemini<br/>(analyse IA + assistant)"]
   R["GitHub Releases<br/>ISETCare.apk"]
-  B -- "loads pages" --> W
+  B -- "pages" --> W
   B -- "HTTPS JSON /api/**" --> A
   M -- "HTTPS JSON /api/mobile/** · /api/ia/**" --> A
   A -- "JDBC / JPA" --> D
   A --- U
-  A -- "HTTPS, key stays on server" --> G
-  B -. "Télécharger button" .-> R
-  R -. "install APK" .-> M
+  A -- "HTTPS (clé côté serveur)" --> G
+  B -. "bouton Télécharger" .-> R
+  R -. "installation de l'APK" .-> M
 </pre>
     </div>
     <div class="notes">
-      <div><h3>One backend, two clients</h3><p>A breakdown reported from the phone appears on the website at once, because both write to the same API and database.</p></div>
-      <div><h3>Free-tier behaviour</h3><p>The Render server sleeps after 15 minutes without traffic; the first request then takes about a minute. Photos in <code>uploads/</code> are lost when it restarts.</p></div>
+      <div><h3>Un seul serveur, deux clients</h3><p>Une réclamation signalée depuis le téléphone apparaît aussitôt sur le site : les deux écrivent dans la même API et la même base.</p></div>
+      <div><h3>Offre gratuite</h3><p>Le serveur Render s'endort après 15 minutes sans visite ; la requête suivante prend environ une minute. Les photos du dossier <code>uploads/</code> sont perdues à chaque redémarrage.</p></div>
     </div>
   </section>
 
-  <section id="usecases">
-    <h2>Use case diagram</h2>
-    <p>What each role can do, as enforced by <code>SecurityConfig</code> and the controllers. Every actor first logs in. <span class="chip web">web</span> <span class="chip app">app</span> mark where a use case is available.</p>
+  <section id="cas">
+    <h2>Diagramme de cas d'utilisation</h2>
+    <p>Les quatre acteurs du backlog et ce que chacun peut faire, avec les user stories correspondantes. Toute action suppose d'être connecté (US01).</p>
     <div class="sheet">
 <pre class="mermaid">
 flowchart LR
-  DEC(["👤 Déclarant<br/>(teacher, staff)"])
-  TEC(["👤 Technicien"])
-  ADM(["👤 Administrateur"])
-  SYS(["⚙ Scheduler<br/>(every hour)"])
+  DEC(["Déclarant<br/>(enseignant / personnel)"])
+  TEC(["Technicien"])
+  ADM(["Administrateur"])
+  SYS(["Système / IA"])
   subgraph ISETCare
     direction TB
-    UC0(("Log in / edit profile"))
-    UC1(("Report a breakdown<br/>form or QR scan"))
-    UC2(("Get AI suggestion<br/>category · priority · cause"))
-    UC3(("Track my reports"))
-    UC4(("Browse equipment"))
-    UC5(("Read notifications"))
-    UC6(("Chat with AI assistant"))
-    UC7(("Take charge of a report<br/>AFFECTEE → EN_COURS"))
-    UC8(("Record an intervention<br/>diagnosis · action · cost"))
-    UC9(("Mark report resolved"))
-    UC10(("Carry out preventive maintenance"))
-    UC11(("View equipment history"))
-    UC12(("Assign a technician"))
-    UC13(("Set priority / close report"))
-    UC14(("Manage rooms, types,<br/>equipment, users"))
-    UC15(("Plan preventive maintenance"))
-    UC16(("Statistics & AI<br/>repair / replace advice"))
-    UC17(("Flag late maintenance,<br/>send reminders"))
+    UC1(("S'authentifier, gérer son profil<br/>US01 · US03"))
+    UC2(("Scanner le QR code d'un équipement<br/>US10"))
+    UC3(("Créer une réclamation<br/>description + photo · US11"))
+    UC4(("Suivre ses réclamations<br/>US12"))
+    UC5(("Rechercher le matériel, consulter une fiche<br/>US08 · US09"))
+    UC6(("Recevoir des notifications<br/>US26 à US30"))
+    UC7(("Voir les réclamations affectées<br/>US15"))
+    UC8(("Enregistrer une intervention<br/>diagnostic, action, coût, durée · US17 · US19"))
+    UC9(("Mettre à jour le statut<br/>US18"))
+    UC10(("Réaliser une maintenance, saisir le rapport<br/>US23"))
+    UC11(("Gérer les comptes<br/>US02"))
+    UC12(("Gérer équipements, types, salles, QR codes<br/>US04 à US07"))
+    UC13(("Consulter, affecter, prioriser, clôturer<br/>US13 · US14 · US16"))
+    UC14(("Planifier la maintenance préventive<br/>US21 · US22 · US24"))
+    UC15(("Valider la suggestion de l'IA<br/>US32"))
+    UC16(("Recommandation de remplacement + décision<br/>US33 · US34"))
+    UC17(("Tableau de bord, export<br/>US35 · US36"))
+    UC18(("Analyser une réclamation<br/>catégorie, priorité, panne probable · US31"))
+    UC19(("Mettre à jour historique et coût cumulé<br/>US20"))
+    UC20(("Envoyer rappels et alertes<br/>US28 · US29 · US30"))
   end
-  DEC --- UC0 & UC1 & UC3 & UC4 & UC5 & UC6
-  UC1 -. "include" .-> UC2
-  TEC --- UC0 & UC7 & UC8 & UC9 & UC10 & UC11 & UC5
-  UC9 -. "requires ≥ 1" .-> UC8
-  ADM --- UC0 & UC12 & UC13 & UC14 & UC15 & UC16 & UC11 & UC5
-  SYS --- UC17
+  DEC --- UC1 & UC2 & UC3 & UC4 & UC5 & UC6
+  UC3 -. "include" .-> UC18
+  UC2 -. "extend" .-> UC3
+  TEC --- UC1 & UC7 & UC8 & UC9 & UC10 & UC5 & UC6
+  ADM --- UC1 & UC11 & UC12 & UC13 & UC14 & UC15 & UC16 & UC17 & UC6
+  SYS --- UC18 & UC19 & UC20
 </pre>
     </div>
-    <div class="notes">
-      <div><h3>Déclarant <span class="chip web">web</span> <span class="chip app">app</span></h3><p>Creates reports (<code>POST /api/reclamations</code> is reserved to this role) and only ever sees their own.</p></div>
-      <div><h3>Technicien <span class="chip web">web</span> <span class="chip app">app</span></h3><p>Works only on reports assigned to them. A report cannot be resolved without at least one intervention.</p></div>
-      <div><h3>Administrateur <span class="chip web">web</span> <span class="chip app">app</span></h3><p>Owns assignment, priority and closing, all reference data, maintenance planning and statistics.</p></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Epic</th><th>User stories</th><th>Où dans l'application</th></tr></thead>
+        <tbody>
+          <tr><td>EP1 Authentification</td><td>US01 – US03</td><td><span class="chip web">web</span> page Connexion, Profil, Utilisateurs · <span class="chip app">app</span> écran de connexion</td></tr>
+          <tr><td>EP2 Gestion du matériel</td><td>US04 – US09</td><td><span class="chip web">web</span> Parc matériel, fiche équipement, Salles, Types</td></tr>
+          <tr><td>EP3 QR Code</td><td>US10</td><td><span class="chip app">app</span> onglet Scan</td></tr>
+          <tr><td>EP4 Réclamations</td><td>US11 – US16</td><td><span class="chip web">web</span> Signaler une panne, Réclamations · <span class="chip app">app</span> Signaler, Suivi</td></tr>
+          <tr><td>EP5 Interventions</td><td>US17 – US20</td><td><span class="chip web">web</span> fiche réclamation, Interventions · <span class="chip app">app</span> écran Intervention</td></tr>
+          <tr><td>EP6 Maintenance préventive</td><td>US21 – US25</td><td><span class="chip web">web</span> Maintenance préventive (calendrier) · <span class="chip app">app</span> onglet Agenda</td></tr>
+          <tr><td>EP7 Notifications</td><td>US26 – US30</td><td><span class="chip web">web</span> cloche + page Notifications · <span class="chip app">app</span> écran Notifications · tâche planifiée horaire</td></tr>
+          <tr><td>EP8 Intelligence artificielle</td><td>US31 – US34</td><td><span class="chip web">web</span> pop-up de suggestion, Statistiques &amp; IA · <span class="chip app">app</span> analyse au signalement</td></tr>
+          <tr><td>EP9 Tableau de bord</td><td>US35 – US36</td><td><span class="chip web">web</span> Tableau de bord, Statistiques &amp; IA</td></tr>
+          <tr><td>EP10 Transverse</td><td>US37 – US38</td><td><span class="chip api">API</span> REST commune, contrôle des rôles par JWT</td></tr>
+        </tbody>
+      </table>
     </div>
   </section>
 
   <section id="classes">
-    <h2>Class diagram (domain model)</h2>
-    <p>The JPA entities in <code>backend/…/model</code>, i.e. the tables in PostgreSQL. The three roles are stored in one table, <code>utilisateurs</code> (single-table inheritance): role-specific fields stay empty for the other roles.</p>
+    <h2>Diagramme de classes</h2>
+    <p>Même modèle que dans le document du backlog : les acteurs héritent de <code>Utilisateur</code>, une <code>Intervention</code> est une composition de <code>Reclamation</code>. Les couleurs reprennent les groupes du document.</p>
+    <div class="legend" aria-label="Légende des couleurs">
+      <span><i style="background: var(--g-acteur)"></i>Acteurs</span>
+      <span><i style="background: var(--g-materiel)"></i>Matériel</span>
+      <span><i style="background: var(--g-traitement)"></i>Traitement des pannes et maintenance</span>
+      <span><i style="background: var(--g-ia)"></i>IA</span>
+      <span><i style="background: var(--g-notif)"></i>Notifications</span>
+    </div>
     <div class="sheet">
 <pre class="mermaid">
 classDiagram
-  direction LR
+  direction TB
   class Utilisateur {
-    +Long id
-    +String nom
-    +String prenom
-    +String email
-    -String motDePasse
-    +String telephone
-    +Role role
-    +boolean actif
+    -id : int
+    -nom : String
+    -prenom : String
+    -email : String
+    -motDePasse : String
+    -telephone : String
+    -role : Role
   }
   class Declarant {
-    +String departement
-    +String fonction
-  }
-  class Technicien {
-    +String specialite
-    +Boolean disponible
+    -departement : String
+    -fonction : String
   }
   class Administrateur {
-    +String service
+    -service : String
   }
-  Utilisateur <|-- Declarant
-  Utilisateur <|-- Technicien
-  Utilisateur <|-- Administrateur
-
-  class Salle {
-    +Long id
-    +String nom
-    +String batiment
-    +Integer etage
-  }
-  class TypeEquipement {
-    +Long id
-    +String libelle
-    +Integer frequenceMaintenanceMois = 6
-    +Integer dureeVieEstimeeMois
-  }
-  class Equipement {
-    +Long id
-    +String reference
-    +String marque
-    +String modele
-    +String numeroSerie
-    +LocalDate dateAcquisition
-    +BigDecimal prixAchat
-    +EtatEquipement etat
-    +String qrCode
-  }
-  class Reclamation {
-    +Long id
-    +String description
-    +String photo
-    +LocalDateTime dateCreation
-    +StatutReclamation statut
-    +Priorite priorite
-    +String categorie
-  }
-  class AnalyseIA {
-    +Long id
-    +String categorieSuggeree
-    +Priorite prioriteSuggeree
-    +String typePanneProbable
-    +Float scoreConfiance
-  }
-  class Intervention {
-    +Long id
-    +String diagnostic
-    +String actionEffectuee
-    +LocalDateTime dateDebut
-    +LocalDateTime dateFin
-    +BigDecimal cout
-    +String resultat
-  }
-  class MaintenancePreventive {
-    +Long id
-    +LocalDate datePlanifiee
-    +LocalDate dateRealisation
-    +Integer frequenceMois
-    +StatutMaintenance statut
-    +String rapport
+  class Technicien {
+    -specialite : String
+    -disponible : boolean
   }
   class Notification {
-    +Long id
-    +TypeNotification type
-    +String message
-    +LocalDateTime dateEnvoi
-    +boolean lue
+    -id : int
+    -type : TypeNotification
+    -message : String
+    -dateEnvoi : DateTime
+    -lue : boolean
+  }
+  class Reclamation {
+    -id : int
+    -description : String
+    -photo : String
+    -dateCreation : DateTime
+    -statut : StatutReclamation
+    -priorite : Priorite
+    -categorie : String
+  }
+  class Intervention {
+    -id : int
+    -diagnostic : String
+    -actionEffectuee : String
+    -dateDebut : DateTime
+    -dateFin : DateTime
+    -cout : double
+    -resultat : String
+  }
+  class MaintenancePreventive {
+    -id : int
+    -datePlanifiee : Date
+    -dateRealisation : Date
+    -frequenceMois : int
+    -statut : StatutMaintenance
+    -rapport : String
+  }
+  class AnalyseIA {
+    -id : int
+    -categorieSuggeree : String
+    -prioriteSuggeree : Priorite
+    -typePanneProbable : String
+    -scoreConfiance : float
+  }
+  class Equipement {
+    -id : int
+    -reference : String
+    -marque : String
+    -modele : String
+    -numeroSerie : String
+    -dateAcquisition : Date
+    -prixAchat : double
+    -etat : EtatEquipement
+    -qrCode : String
+  }
+  class Salle {
+    -id : int
+    -nom : String
+    -batiment : String
+    -etage : int
+  }
+  class TypeEquipement {
+    -id : int
+    -libelle : String
+    -frequenceMaintenanceMois : int
+    -dureeVieEstimee : int
   }
   class RecommandationRemplacement {
-    +Long id
-    +Integer nbPannes
-    +Integer nbInterventions
-    +BigDecimal coutCumuleReparations
-    +BigDecimal coutRemplacementEstime
-    +Integer dureeIndisponibiliteJours
-    +Decision decision
-    +LocalDate dateAnalyse
+    -id : int
+    -nbPannes : int
+    -nbInterventions : int
+    -coutCumuleReparations : double
+    -coutRemplacementEstime : double
+    -dureeIndisponibilite : int
+    -decision : Decision
+    -dateAnalyse : Date
   }
 
-  Equipement "0..*" --> "0..1" Salle : installé dans
-  Equipement "0..*" --> "0..1" TypeEquipement : est de type
-  Reclamation "0..*" --> "1" Equipement : concerne
-  Reclamation "0..*" --> "1" Declarant : déclarée par
-  Reclamation "0..*" --> "0..1" Technicien : affectée à
-  AnalyseIA "0..1" --> "1" Reclamation : analyse
-  Intervention "0..*" --> "1" Reclamation : traite
-  Intervention "0..*" --> "0..1" Technicien : réalisée par
-  MaintenancePreventive "0..*" --> "1" Equipement : planifiée sur
-  MaintenancePreventive "0..*" --> "0..1" Technicien : confiée à
-  Notification "0..*" --> "1" Utilisateur : destinataire
-  RecommandationRemplacement "0..*" --> "1" Equipement : évalue
+  Utilisateur <|-- Declarant
+  Utilisateur <|-- Administrateur
+  Utilisateur <|-- Technicien
+  Utilisateur "1" -- "0..*" Notification : reçoit
+  Declarant "1" -- "0..*" Reclamation : déclare
+  Administrateur "1" -- "0..*" Reclamation : affecte
+  Technicien "1" -- "0..*" Intervention : réalise
+  Technicien "1" -- "0..*" MaintenancePreventive : exécute
+  Reclamation "1" *-- "0..*" Intervention : donne lieu à
+  Reclamation "1" -- "0..1" AnalyseIA : analysée par
+  Reclamation "0..*" -- "1" Equipement : concerne
+  Equipement "1" -- "0..*" MaintenancePreventive : a
+  Equipement "0..*" -- "1" Salle : situé dans
+  Equipement "0..*" -- "1" TypeEquipement : est de type
+  Equipement "1" -- "0..*" RecommandationRemplacement : fait l'objet de
 
+  style Utilisateur fill:#dbe9fb,stroke:#3b6ea8,color:#1a2230
+  style Declarant fill:#dbe9fb,stroke:#3b6ea8,color:#1a2230
+  style Administrateur fill:#dbe9fb,stroke:#3b6ea8,color:#1a2230
+  style Technicien fill:#dbe9fb,stroke:#3b6ea8,color:#1a2230
+  style Equipement fill:#fde3c8,stroke:#c26a1b,color:#1a2230
+  style Salle fill:#fde3c8,stroke:#c26a1b,color:#1a2230
+  style TypeEquipement fill:#fde3c8,stroke:#c26a1b,color:#1a2230
+  style Reclamation fill:#d9f2df,stroke:#2f8a4c,color:#1a2230
+  style Intervention fill:#d9f2df,stroke:#2f8a4c,color:#1a2230
+  style MaintenancePreventive fill:#d9f2df,stroke:#2f8a4c,color:#1a2230
+  style AnalyseIA fill:#e9defa,stroke:#7a4fc2,color:#1a2230
+  style RecommandationRemplacement fill:#e9defa,stroke:#7a4fc2,color:#1a2230
+  style Notification fill:#fff4bf,stroke:#b8962a,color:#1a2230
+</pre>
+    </div>
+    <div class="sheet narrow">
+<pre class="mermaid">
+classDiagram
+  direction LR
   class Role {
     &lt;&lt;enumeration&gt;&gt;
     DECLARANT
     TECHNICIEN
     ADMINISTRATEUR
-  }
-  class EtatEquipement {
-    &lt;&lt;enumeration&gt;&gt;
-    EN_SERVICE
-    EN_PANNE
-    EN_MAINTENANCE
-    HORS_SERVICE
   }
   class StatutReclamation {
     &lt;&lt;enumeration&gt;&gt;
@@ -329,6 +365,13 @@ classDiagram
     MOYENNE
     HAUTE
     URGENTE
+  }
+  class EtatEquipement {
+    &lt;&lt;enumeration&gt;&gt;
+    EN_SERVICE
+    EN_PANNE
+    EN_MAINTENANCE
+    HORS_SERVICE
   }
   class StatutMaintenance {
     &lt;&lt;enumeration&gt;&gt;
@@ -353,44 +396,50 @@ classDiagram
   }
 </pre>
     </div>
+    <div class="notes">
+      <div><h3>Règles de gestion</h3><p>Un équipement a un QR code unique. Une réclamation concerne un seul équipement. Une intervention appartient à une réclamation (composition) et est réalisée par un technicien.</p></div>
+      <div><h3>Maintenance et remplacement</h3><p>La prochaine maintenance se calcule depuis la fréquence du type d'équipement. La recommandation compare le coût cumulé des réparations au coût de remplacement ; l'administrateur décide.</p></div>
+    </div>
+  </section>
+
+  <section id="ecarts">
+    <h2>Écarts entre le modèle et le code</h2>
+    <p>Le code respecte le diagramme, avec ces différences d'implémentation. Elles sont bonnes à connaître si le jury compare le modèle et la base de données.</p>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Class</th><th>Database table</th><th>Role in the system</th></tr></thead>
+        <thead><tr><th>Point du modèle</th><th>Dans le code</th><th>Pourquoi</th></tr></thead>
         <tbody>
-          <tr><td>Utilisateur</td><td><code>utilisateurs</code></td><td>Every account; <code>role</code> decides which menus and API calls are allowed.</td></tr>
-          <tr><td>Salle, TypeEquipement</td><td><code>salles</code>, <code>types_equipement</code></td><td>Reference data managed by the administrator.</td></tr>
-          <tr><td>Equipement</td><td><code>equipements</code></td><td>The inventory. Its <code>qrCode</code> is what the app scans; <code>etat</code> follows its open reports.</td></tr>
-          <tr><td>Reclamation</td><td><code>reclamations</code></td><td>A breakdown report, the centre of the workflow.</td></tr>
-          <tr><td>AnalyseIA</td><td><code>analyses_ia</code></td><td>The AI's suggestion stored with the report (one at most).</td></tr>
-          <tr><td>Intervention</td><td><code>interventions</code></td><td>Repair work and its cost; feeds the repair/replace advice.</td></tr>
-          <tr><td>MaintenancePreventive</td><td><code>maintenances_preventives</code></td><td>Planned servicing, checked every hour by the scheduler.</td></tr>
-          <tr><td>Notification</td><td><code>notifications</code></td><td>In-app messages (bell icon on the site, screen in the app).</td></tr>
-          <tr><td>RecommandationRemplacement</td><td><code>recommandations_remplacement</code></td><td>The administrator's repair / replace decision for a piece of equipment.</td></tr>
+          <tr><td>Héritage Déclarant / Administrateur / Technicien</td><td>Une seule table <code>utilisateurs</code> avec la colonne <code>role</code> ; les attributs propres à un rôle restent vides pour les autres.</td><td>Héritage « table unique » : plus simple pour la connexion et les requêtes.</td></tr>
+          <tr><td>Administrateur « affecte » Reclamation</td><td>La réclamation stocke le technicien affecté (<code>technicien_id</code>) ; l'administrateur qui a affecté n'est pas enregistré.</td><td>Seul l'administrateur peut affecter (règle de sécurité), donc son identité n'est pas nécessaire au traitement.</td></tr>
+          <tr><td>Types <code>int</code>, <code>double</code></td><td><code>Long</code> pour les identifiants, <code>BigDecimal</code> pour les montants.</td><td>Identifiants générés par PostgreSQL ; montants exacts sans erreur d'arrondi.</td></tr>
+          <tr><td>Multiplicités « 1 » vers Salle, TypeEquipement, Technicien</td><td>Colonnes facultatives (0..1) : un équipement peut être créé avant d'avoir une salle, une intervention ou une maintenance avant d'avoir un technicien.</td><td>Souplesse à la saisie ; le diagramme décrit le cas normal.</td></tr>
+          <tr><td>motDePasse : String</td><td>Stocké chiffré (BCrypt), jamais renvoyé par l'API.</td><td>Sécurité des comptes.</td></tr>
+          <tr><td>—</td><td>Ajout : assistant de discussion IA (Gemini), sans nouvelle classe persistée.</td><td>Aide aux utilisateurs du site ; la conversation n'est pas enregistrée.</td></tr>
         </tbody>
       </table>
     </div>
   </section>
 
-  <section id="states">
-    <h2>State machine diagrams</h2>
-    <p>The allowed status changes, as coded in <code>ReclamationController</code>, <code>InterventionService</code> and <code>MaintenanceScheduler</code>.</p>
+  <section id="etats">
+    <h2>Diagrammes d'états</h2>
+    <p>Changements de statut autorisés, tels que codés dans <code>ReclamationController</code>, <code>InterventionService</code> et <code>MaintenanceScheduler</code>.</p>
     <div class="sheet narrow">
 <pre class="mermaid">
 stateDiagram-v2
   direction LR
-  [*] --> NOUVEAU : déclarant reports (web/app)
-  NOUVEAU --> AFFECTEE : admin assigns a technician
-  AFFECTEE --> EN_COURS : technician takes charge
-  AFFECTEE --> EN_COURS : first intervention recorded
-  EN_COURS --> RESOLU : technician resolves (≥ 1 intervention)
-  NOUVEAU --> CLOTURE : admin closes
-  AFFECTEE --> CLOTURE : admin closes
-  EN_COURS --> CLOTURE : admin closes
-  RESOLU --> CLOTURE : admin closes
+  [*] --> NOUVEAU : le déclarant signale (US11)
+  NOUVEAU --> AFFECTEE : l'administrateur affecte (US14)
+  AFFECTEE --> EN_COURS : le technicien prend en charge (US18)
+  AFFECTEE --> EN_COURS : première intervention saisie
+  EN_COURS --> RESOLU : le technicien résout, au moins 1 intervention
+  NOUVEAU --> CLOTURE : l'administrateur clôture (US16)
+  AFFECTEE --> CLOTURE : l'administrateur clôture
+  EN_COURS --> CLOTURE : l'administrateur clôture
+  RESOLU --> CLOTURE : l'administrateur clôture
   CLOTURE --> [*]
   note right of RESOLU
-    Every change notifies the déclarant
-    (CHANGEMENT_STATUT)
+    Chaque changement notifie
+    le déclarant (US27)
   end note
 </pre>
     </div>
@@ -398,67 +447,67 @@ stateDiagram-v2
 <pre class="mermaid">
 stateDiagram-v2
   direction LR
-  [*] --> PLANIFIEE : admin plans
-  PLANIFIEE --> EN_RETARD : scheduler, date passed
-  PLANIFIEE --> REALISEE : technician carries out
-  EN_RETARD --> REALISEE : technician carries out
-  PLANIFIEE --> ANNULEE : admin cancels
-  EN_RETARD --> ANNULEE : admin cancels
+  [*] --> PLANIFIEE : l'administrateur planifie (US22)
+  PLANIFIEE --> EN_RETARD : tâche horaire, date dépassée
+  PLANIFIEE --> REALISEE : le technicien réalise (US23)
+  EN_RETARD --> REALISEE : le technicien réalise
+  PLANIFIEE --> ANNULEE : l'administrateur annule
+  EN_RETARD --> ANNULEE : l'administrateur annule
   REALISEE --> [*]
   ANNULEE --> [*]
   note right of PLANIFIEE
-    Reminder to the technician
-    3 days before (RAPPEL_MAINTENANCE)
+    Rappel au technicien
+    3 jours avant (US28)
   end note
 </pre>
     </div>
   </section>
 
-  <section id="sequence-report">
-    <h2>Sequence diagram: report a breakdown</h2>
-    <p>The main flow, from the website's "Signaler une panne" page. The app follows the same path through <code>/api/ia/analyser</code> and <code>/api/mobile/reclamations</code>, usually after scanning the equipment's QR code.</p>
+  <section id="seq-signaler">
+    <h2>Diagramme de séquence : signaler une panne</h2>
+    <p>Le scénario principal depuis la page « Signaler une panne » du site (US11, US31, US26). L'application suit le même chemin par <code>/api/ia/analyser</code> et <code>/api/mobile/reclamations</code>, en général après le scan du QR code (US10).</p>
     <div class="sheet">
 <pre class="mermaid">
 sequenceDiagram
   autonumber
   actor D as Déclarant
-  participant W as Website (React)
+  participant W as Site web (React)
   participant A as API (Spring Boot)
   participant IA as IaService
   participant G as Gemini
   participant DB as PostgreSQL
   participant N as NotificationService
-  D->>W: Describes the problem, picks the equipment
+  D->>W: Décrit la panne, choisit l'équipement
   W->>A: POST /api/ai/analyze {description, equipementId}
   A->>IA: analyser(description, type)
-  alt GEMINI_API_KEY set
-    IA->>G: generateContent (JSON prompt)
-    G-->>IA: categorie, typePanne, priorite, confiance
-  else no key or Gemini error
-    IA->>IA: RulesClassifier (keywords)
+  alt clé GEMINI_API_KEY définie
+    IA->>G: generateContent (consigne JSON)
+    G-->>IA: catégorie, type de panne, priorité, confiance
+  else pas de clé ou erreur Gemini
+    IA->>IA: RulesClassifier (mots-clés)
   end
-  Note over IA: Smoke, sparks, burning smell → URGENTE, always
+  Note over IA: Fumée, étincelle, odeur de brûlé → URGENTE dans tous les cas
   IA-->>A: AiAnalysis
   A-->>W: suggestion
-  W-->>D: Pop-up: category, priority, probable cause
-  D->>W: Confirms and sends (optional photo)
+  W-->>D: Pop-up : catégorie, priorité, cause probable
+  D->>W: Confirme et envoie (photo facultative)
   W->>A: POST /api/reclamations (multipart, JWT)
-  A->>DB: INSERT reclamation (NOUVEAU) + analyse_ia
+  A->>DB: INSERT reclamation (NOUVEAU) + analyse IA
   A->>DB: equipement.etat = EN_PANNE
   A->>N: notifierAdmins(NOUVELLE_RECLAMATION)
-  opt Repeated breakdowns on this equipment
+  opt Pannes répétées sur cet équipement (US30)
     A->>N: notifierAdmins(PANNES_FREQUENTES)
   end
   N->>DB: INSERT notifications
   A-->>W: 201 Created
-  W-->>D: Report listed under "Mes réclamations"
+  W-->>D: Réclamation visible dans « Mes réclamations » (US12)
 </pre>
     </div>
   </section>
 
-  <section id="sequence-repair">
-    <h2>Sequence diagram: assignment and repair</h2>
-    <p>What happens after the report exists, across the three roles. The technician can do steps 4 to 9 from the website or from the app.</p>
+  <section id="seq-traiter">
+    <h2>Diagramme de séquence : affectation et traitement</h2>
+    <p>La suite, entre les trois rôles (US14, US18, US17, US19, US16, US33). Le technicien peut faire les étapes 4 à 9 sur le site ou dans l'application.</p>
     <div class="sheet">
 <pre class="mermaid">
 sequenceDiagram
@@ -469,29 +518,29 @@ sequenceDiagram
   participant A as API
   participant DB as PostgreSQL
   AD->>A: PATCH /api/reclamations/{id}/affectation {technicienId}
-  A->>DB: technicienAffecte = T, statut = AFFECTEE
+  A->>DB: technicien affecté, statut = AFFECTEE
   A-->>T: Notification NOUVELLE_RECLAMATION
   T->>A: PATCH /api/reclamations/{id}/statut EN_COURS
   A-->>D: Notification CHANGEMENT_STATUT
-  T->>A: POST /api/reclamations/{id}/interventions {diagnostic, action, cout}
+  T->>A: POST /api/reclamations/{id}/interventions {diagnostic, action, coût}
   A->>DB: INSERT intervention
   T->>A: PATCH /api/reclamations/{id}/statut RESOLU
-  A->>DB: check ≥ 1 intervention, statut = RESOLU, equipment state synced
+  A->>DB: vérifie au moins 1 intervention, statut = RESOLU, état de l'équipement mis à jour
   A-->>D: Notification CHANGEMENT_STATUT
   AD->>A: PATCH /api/reclamations/{id}/cloture
   A->>DB: statut = CLOTURE
   A-->>D: Notification CHANGEMENT_STATUT
-  opt Equipment keeps failing
+  opt L'équipement tombe souvent en panne
     AD->>A: POST /api/ai/recommend-replacement {equipementId}
-    A-->>AD: REPARER / SURVEILLER / REMPLACER with reasons (cost ratio, breakdowns in 12 months, age)
+    A-->>AD: REPARER / SURVEILLER / REMPLACER avec les raisons (coût, pannes sur 12 mois, âge)
   end
 </pre>
     </div>
   </section>
 
-  <section id="components">
-    <h2>Component diagram</h2>
-    <p>How the code is organised in each of the three projects, and which part calls which.</p>
+  <section id="composants">
+    <h2>Diagramme de composants</h2>
+    <p>L'organisation du code dans les trois projets, et qui appelle qui.</p>
     <div class="sheet">
 <pre class="mermaid">
 flowchart TB
@@ -499,16 +548,16 @@ flowchart TB
     direction TB
     WP["pages/<br/>Login · Dashboard · Equipements · EquipementDetail<br/>Reclamations · ReclamationNew · ReclamationDetail<br/>Interventions · Maintenances · Salles · Types<br/>Users · Statistiques · Notifications · Profile"]
     WC["components/<br/>Layout · ChatWidget · EquipementForm · QrCodeView<br/>MaintenanceCalendar · ReplacementAdvisor · …"]
-    WA["api/ (axios client + JWT)<br/>ai · reclamations · materiel · maintenances<br/>notifications · stats · suivi"]
-    WX["auth/<br/>AuthContext · ProtectedRoute (role check)"]
+    WA["api/ (client axios + JWT)<br/>ai · reclamations · materiel · maintenances<br/>notifications · stats · suivi"]
+    WX["auth/<br/>AuthContext · ProtectedRoute (contrôle du rôle)"]
     WP --> WC --> WA
     WP --> WX
   end
-  subgraph MOB["ISETCare Android app"]
+  subgraph MOB["Application Android ISETCare"]
     direction TB
-    AU["ui/<br/>LoginActivity · MainActivity<br/>(Home · Scan · Suivi · Agenda fragments)<br/>Equipement · Signaler · Reclamation<br/>Intervention · Notifications activities"]
+    AU["ui/<br/>LoginActivity · MainActivity<br/>(fragments Home · Scan · Suivi · Agenda)<br/>activités Equipement · Signaler · Reclamation<br/>Intervention · Notifications"]
     AN["network/<br/>ApiClient · IsetCareApi (Retrofit) · Dtos"]
-    AD["data/<br/>DataStore (local cache) · Formats"]
+    AD["data/<br/>DataStore (cache local) · Formats"]
     AI2["ai/<br/>IncidentClassifier · ReplacementAdvisor"]
     AM["model/<br/>Equipement · Reclamation · Intervention · …"]
     AU --> AN
@@ -519,45 +568,45 @@ flowchart TB
   end
   subgraph API["backend (Spring Boot)"]
     direction TB
-    SC["security/<br/>JwtAuthFilter · JwtService · SecurityConfig (roles)"]
+    SC["security/<br/>JwtAuthFilter · JwtService · SecurityConfig (rôles)"]
     CT["controller/<br/>Auth · Reclamation · Intervention · Equipement · Salle<br/>TypeEquipement · Maintenance · Notification · User<br/>Stats · Ia · Mobile · Health"]
     SV["service/<br/>IaService · RulesClassifier · NotificationService<br/>InterventionService · EtatSyncService · AccessService<br/>MaintenanceScheduler · FileStorageService · MobileMapper"]
-    RP["repository/<br/>Spring Data JPA, one per entity"]
-    MD["model/ + dto/<br/>JPA entities · request/response records"]
+    RP["repository/<br/>Spring Data JPA, un par entité"]
+    MD["model/ + dto/<br/>entités JPA · objets d'échange"]
     SC --> CT --> SV --> RP --> MD
     CT --> RP
   end
   WA -- "REST /api/**" --> SC
   AN -- "REST /api/mobile/** · /api/ia/**" --> SC
   RP --> PG[("PostgreSQL")]
-  SV --> GM["Gemini API"]
+  SV --> GM["API Gemini"]
 </pre>
     </div>
   </section>
 
   <section id="api">
-    <h2>API endpoints</h2>
-    <p>The REST interface between the clients and the server. <span class="chip web">web</span> and <span class="chip app">app</span> show who calls it; all routes except login and health need a valid token.</p>
+    <h2>API REST commune (US37)</h2>
+    <p>L'interface entre les clients et le serveur. <span class="chip web">web</span> et <span class="chip app">app</span> indiquent qui l'appelle ; toutes les routes sauf la connexion et <code>health</code> exigent un jeton valide (US38).</p>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Area</th><th>Routes</th><th>Allowed roles</th><th>Used by</th></tr></thead>
+        <thead><tr><th>Domaine</th><th>Routes</th><th>Rôles autorisés</th><th>Client</th></tr></thead>
         <tbody>
-          <tr><td>Authentication</td><td><code>POST /api/auth/login</code> · <code>GET /me</code> · <code>PUT /profile</code> · <code>PUT /password</code></td><td>Anyone (login), then logged-in users</td><td><span class="chip web">web</span> <span class="chip app">app</span></td></tr>
-          <tr><td>Reports</td><td><code>POST /api/reclamations</code> · <code>GET /api/reclamations[/{id}]</code> · <code>GET /{id}/photo</code></td><td>Create: déclarant · read: logged in (own reports only for déclarants)</td><td><span class="chip web">web</span></td></tr>
-          <tr><td>Report workflow</td><td><code>PATCH /{id}/affectation</code> · <code>/priorite</code> · <code>/cloture</code> · <code>/statut</code></td><td>Admin; <code>/statut</code>: technician</td><td><span class="chip web">web</span></td></tr>
-          <tr><td>Interventions</td><td><code>GET|POST /api/reclamations/{id}/interventions</code> · <code>GET /api/interventions</code></td><td>Technician (write), admin + technician (read)</td><td><span class="chip web">web</span></td></tr>
-          <tr><td>Equipment</td><td><code>/api/equipements</code> CRUD · <code>PATCH /{id}/etat</code> · <code>GET /{id}/historique</code> · <code>/{id}/decisions</code></td><td>Read: logged in · write and decisions: admin · history: admin + technician</td><td><span class="chip web">web</span></td></tr>
-          <tr><td>Reference data</td><td><code>/api/salles</code> · <code>/api/types</code> · <code>/api/users</code> (+ <code>PATCH /{id}/actif</code>)</td><td>Read: logged in · write: admin</td><td><span class="chip web">web</span></td></tr>
-          <tr><td>Maintenance</td><td><code>/api/maintenances</code> CRUD · <code>PATCH /{id}/annuler</code> · <code>PATCH /{id}/realiser</code></td><td>Admin; realise: technician</td><td><span class="chip web">web</span></td></tr>
-          <tr><td>Notifications</td><td><code>GET /api/notifications</code> · <code>/non-lues</code> · <code>PATCH /{id}/lue</code> · <code>PATCH /lues</code></td><td>Logged in (own only)</td><td><span class="chip web">web</span></td></tr>
-          <tr><td>Statistics</td><td><code>GET /api/stats</code></td><td>Admin</td><td><span class="chip web">web</span></td></tr>
-          <tr><td>AI</td><td><code>POST /api/ai/analyze</code> · <code>/api/ai/chat</code> · <code>/api/ai/recommend-replacement</code></td><td>Logged in; replacement advice: admin</td><td><span class="chip web">web</span></td></tr>
-          <tr><td>Mobile</td><td><code>GET /api/mobile/sync</code> · <code>POST /reclamations</code> · <code>PUT /reclamations/{id}/affectation</code> · <code>POST /interventions</code> · <code>PUT /maintenances/{id}/realisation</code> · <code>PUT /notifications/{id}/lue</code> · <code>POST /api/ia/analyser</code></td><td>Logged in; role checked inside <code>MobileController</code></td><td><span class="chip app">app</span></td></tr>
-          <tr><td>Health</td><td><code>GET /api/health</code></td><td>Public</td><td><span class="chip api">Render</span></td></tr>
+          <tr><td>Authentification</td><td><code>POST /api/auth/login</code> · <code>GET /me</code> · <code>PUT /profile</code> · <code>PUT /password</code></td><td>Tous (connexion), puis tout utilisateur connecté</td><td><span class="chip web">web</span> <span class="chip app">app</span></td></tr>
+          <tr><td>Réclamations</td><td><code>POST /api/reclamations</code> · <code>GET /api/reclamations[/{id}]</code> · <code>GET /{id}/photo</code></td><td>Création : déclarant · lecture : connecté (ses propres réclamations pour un déclarant)</td><td><span class="chip web">web</span></td></tr>
+          <tr><td>Traitement</td><td><code>PATCH /{id}/affectation</code> · <code>/priorite</code> · <code>/cloture</code> · <code>/statut</code></td><td>Administrateur ; <code>/statut</code> : technicien</td><td><span class="chip web">web</span></td></tr>
+          <tr><td>Interventions</td><td><code>GET|POST /api/reclamations/{id}/interventions</code> · <code>GET /api/interventions</code></td><td>Technicien (écriture), administrateur + technicien (lecture)</td><td><span class="chip web">web</span></td></tr>
+          <tr><td>Équipements</td><td><code>/api/equipements</code> CRUD · <code>PATCH /{id}/etat</code> · <code>GET /{id}/historique</code> · <code>/{id}/decisions</code></td><td>Lecture : connecté · écriture et décisions : administrateur · historique : administrateur + technicien</td><td><span class="chip web">web</span></td></tr>
+          <tr><td>Référentiels</td><td><code>/api/salles</code> · <code>/api/types</code> · <code>/api/users</code> (+ <code>PATCH /{id}/actif</code>)</td><td>Lecture : connecté · écriture : administrateur</td><td><span class="chip web">web</span></td></tr>
+          <tr><td>Maintenance</td><td><code>/api/maintenances</code> CRUD · <code>PATCH /{id}/annuler</code> · <code>PATCH /{id}/realiser</code></td><td>Administrateur ; réalisation : technicien</td><td><span class="chip web">web</span></td></tr>
+          <tr><td>Notifications</td><td><code>GET /api/notifications</code> · <code>/non-lues</code> · <code>PATCH /{id}/lue</code> · <code>PATCH /lues</code></td><td>Connecté (les siennes uniquement)</td><td><span class="chip web">web</span></td></tr>
+          <tr><td>Statistiques</td><td><code>GET /api/stats</code></td><td>Administrateur</td><td><span class="chip web">web</span></td></tr>
+          <tr><td>IA</td><td><code>POST /api/ai/analyze</code> · <code>/api/ai/chat</code> · <code>/api/ai/recommend-replacement</code></td><td>Connecté ; recommandation : administrateur</td><td><span class="chip web">web</span></td></tr>
+          <tr><td>Mobile</td><td><code>GET /api/mobile/sync</code> · <code>POST /reclamations</code> · <code>PUT /reclamations/{id}/affectation</code> · <code>POST /interventions</code> · <code>PUT /maintenances/{id}/realisation</code> · <code>PUT /notifications/{id}/lue</code> · <code>POST /api/ia/analyser</code></td><td>Connecté ; le rôle est vérifié dans <code>MobileController</code></td><td><span class="chip app">app</span></td></tr>
+          <tr><td>Supervision</td><td><code>GET /api/health</code></td><td>Public</td><td><span class="chip api">Render</span></td></tr>
         </tbody>
       </table>
     </div>
   </section>
 
-  <footer>Generated from the source code of <span class="mono">hadilab56/isetcare-site</span> (backend + React site) and <span class="mono">hadilab56/ISETCare</span> (Android), November 2026.</footer>
+  <footer>Établi à partir du code de <span class="mono">hadilab56/isetcare-site</span> (API + site React) et <span class="mono">hadilab56/ISETCare</span> (Android), et du document « ISETCare – Product Backlog et Diagramme de classes », novembre 2026.</footer>
 </div>
