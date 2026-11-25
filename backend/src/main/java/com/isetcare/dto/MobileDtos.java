@@ -44,4 +44,6 @@ public final class MobileDtos {
                                        Boolean resolu, Long dateDebut) {}
 
     public record Realisation(String rapport) {}
+
+    public record ModificationReclamation(String description, String categorie, String priorite) {}
 }

@@ -34,7 +34,7 @@ public class SecurityConfig {
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
             .authorizeHttpRequests(a -> a
-                .requestMatchers("/api/health", "/api/auth/login").permitAll()
+                .requestMatchers("/api/health", "/api/auth/login", "/api/auth/register").permitAll()
                 // Page d'erreur interne de Spring : sans cette règle, un « accès refusé » (403)
                 // y est redirigé, exige une connexion et devient un 401, ce qui déconnecte l'utilisateur du site.
                 .requestMatchers("/error").permitAll()

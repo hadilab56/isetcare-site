@@ -2,6 +2,7 @@ package com.isetcare.controller;
 
 import com.isetcare.dto.AuthDtos.*;
 import com.isetcare.dto.UserDto;
+import com.isetcare.model.Role;
 import com.isetcare.model.Utilisateur;
 import com.isetcare.repository.UtilisateurRepository;
 import com.isetcare.security.JwtService;
@@ -33,6 +34,28 @@ public class AuthController {
         Utilisateur u = users.findByEmail(req.email().toLowerCase().trim()).orElse(null);
         if (u == null || !u.isActif() || !encoder.matches(req.motDePasse(), u.getMotDePasse()))
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Identifiants incorrects.");
+        return new LoginResponse(jwt.generate(u.getEmail(), u.getRole().name()), UserDto.from(u));
+    }
+
+    /**
+     * Inscription (application mobile) : un nouveau compte est toujours DÉCLARANT.
+     * Les techniciens et administrateurs restent créés par l'administrateur depuis le site.
+     */
+    @PostMapping("/register")
+    @ResponseStatus(HttpStatus.CREATED)
+    public LoginResponse register(@Valid @RequestBody RegisterRequest req) {
+        String email = req.email().toLowerCase().trim();
+        if (users.findByEmail(email).isPresent())
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Un compte existe déjà avec cette adresse e-mail.");
+        Utilisateur u = new Utilisateur();
+        u.setNom(req.nom().trim());
+        u.setPrenom(req.prenom().trim());
+        u.setEmail(email);
+        u.setMotDePasse(encoder.encode(req.motDePasse()));
+        u.setRole(Role.DECLARANT);
+        u.setDepartement(req.departement() == null || req.departement().isBlank() ? null : req.departement().trim());
+        u.setFonction(req.fonction() == null || req.fonction().isBlank() ? "Personnel" : req.fonction().trim());
+        u = users.save(u);
         return new LoginResponse(jwt.generate(u.getEmail(), u.getRole().name()), UserDto.from(u));
     }
 
