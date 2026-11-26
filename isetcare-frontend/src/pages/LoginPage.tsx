@@ -8,7 +8,6 @@ import {
   EyeOff,
   LogIn,
   AlertCircle,
-  Sparkles,
   Smartphone,
   Download,
 } from 'lucide-react';
@@ -62,28 +61,28 @@ export default function LoginPage() {
         {/* Panneau gauche : Présentation visuelle */}
         <div className="login-brand-panel">
           <div className="login-brand-badge">
-            <ShieldCheck size={28} />
-            <span>ISETCare GMAO</span>
+            <ShieldCheck size={22} />
+            <span>ISETCare</span>
           </div>
 
-          <h1>Gestion intelligente du parc matériel et des maintenances</h1>
+          <h1>Gestion du parc matériel et de la maintenance</h1>
           <p>
-            Plateforme centralisée pour le suivi des équipements, la déclaration
-            rapide des pannes par QR Code et l'aide à la décision assistée par IA.
+            ISET Radès : signalement des pannes, suivi des interventions
+            et planification de la maintenance préventive.
           </p>
 
           <div className="login-features">
             <div className="login-feature-item">
               <span className="feature-dot" />
-              <span>Suivi en temps réel des réclamations</span>
+              <span>Signaler une panne et suivre sa réclamation</span>
             </div>
             <div className="login-feature-item">
               <span className="feature-dot" />
-              <span>Diagnostic intelligent & maintenance préventive</span>
+              <span>Interventions et maintenance préventive</span>
             </div>
             <div className="login-feature-item">
               <span className="feature-dot" />
-              <span>Espaces dédiés Déclarant, Technicien & Admin</span>
+              <span>Espaces déclarant, technicien et administrateur</span>
             </div>
           </div>
         </div>
@@ -92,7 +91,7 @@ export default function LoginPage() {
         <div className="login-form-panel">
           <div className="login-form-header">
             <h2>Connexion</h2>
-            <p>Entrez vos identifiants institutionnels pour accéder à votre espace</p>
+            <p>Utilisez votre adresse e-mail et votre mot de passe.</p>
           </div>
 
           {error && (
@@ -104,7 +103,7 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="login-form">
             <div className="form-group">
-              <label htmlFor="email">Adresse email</label>
+              <label htmlFor="email">Adresse e-mail</label>
               <div className="input-with-icon">
                 <Mail size={17} className="input-icon" />
                 <input
@@ -145,11 +144,11 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="btn-primary-pro login-submit-btn"
+              className="primary login-submit-btn"
               disabled={loading}
             >
               <LogIn size={18} />
-              <span>{loading ? 'Connexion en cours...' : 'Se connecter'}</span>
+              <span>{loading ? 'Connexion…' : 'Se connecter'}</span>
             </button>
           </form>
 
@@ -169,8 +168,7 @@ export default function LoginPage() {
           {/* Raccourcis de démonstration (pratique pour votre soutenance PFE) */}
           <div className="demo-accounts-box">
             <div className="demo-title">
-              <Sparkles size={14} />
-              <span>Comptes de démonstration (1 clic) :</span>
+              <span>Comptes de démonstration :</span>
             </div>
             <div className="demo-buttons">
               <button

@@ -117,7 +117,7 @@ export default function ProfilePage() {
             <UserIcon size={20} className="text-primary" />
             <h2>Informations personnelles</h2>
           </div>
-          <p className="card-sub-pro">Mettez à jour vos coordonnées et informations professionnelles.</p>
+          <p className="card-sub-pro">Vos coordonnées.</p>
 
           {profileSuccess && (
             <div className="alert-success">
@@ -194,7 +194,7 @@ export default function ProfilePage() {
             <Lock size={20} className="text-primary" />
             <h2>Sécurité du compte</h2>
           </div>
-          <p className="card-sub-pro">Modifiez votre mot de passe pour sécuriser votre accès.</p>
+          <p className="card-sub-pro">Changer votre mot de passe.</p>
 
           {passwordSuccess && (
             <div className="alert-success">

@@ -1,15 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import {
-  Laptop,
-  PlusCircle,
-  Search,
-  
-  ArrowRight,
-  
-  Building,
-  
-  SlidersHorizontal } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Laptop, PlusCircle, Search, Building, SlidersHorizontal, Pencil, Trash2 } from 'lucide-react';
 import api, { errorMessage } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import {
@@ -20,6 +11,8 @@ import {
   type Salle,
   type TypeEquipement } from '../api/types';
 import { formatPrix } from '../utils/format';
+import { deleteEquipement } from '../api/materiel';
+import EquipementForm from '../components/EquipementForm';
 
 export default function EquipementsPage() {
   const { user } = useAuth();
@@ -39,8 +32,11 @@ export default function EquipementsPage() {
   const [selectedEtat, setSelectedEtat] = useState<string>('');
 
   const isAdmin = user?.role === 'ADMINISTRATEUR';
+  // Formulaire : undefined = fermé, null = création, sinon = modification
+  const [enEdition, setEnEdition] = useState<Equipement | null | undefined>(undefined);
+  const [ok, setOk] = useState('');
 
-  useEffect(() => {
+  const charger = () => {
     setLoading(true);
     Promise.all([
       api.get<Equipement[]>('/equipements'),
@@ -54,7 +50,21 @@ export default function EquipementsPage() {
       })
       .catch((err) => setError(errorMessage(err, 'Impossible de charger le parc matériel.')))
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(charger, []);
+
+  const supprimer = async (eq: Equipement) => {
+    if (!window.confirm(`Supprimer l'équipement ${eq.reference} ? Cette action est définitive.`)) return;
+    setError(null); setOk('');
+    try {
+      await deleteEquipement(eq.id);
+      setOk(`Équipement ${eq.reference} supprimé.`);
+      charger();
+    } catch (err) {
+      setError(errorMessage(err, 'Suppression impossible : cet équipement a peut-être un historique de pannes.'));
+    }
+  };
 
   const getEtatBadgeClass = (etat: EtatEquipement) => {
     switch (etat) {
@@ -71,7 +81,7 @@ export default function EquipementsPage() {
     }
   };
 
-  // Filtrage intelligent et instantané
+  // Filtrage local de la liste
   const filteredEquipements = useMemo(() => {
     return equipements.filter((eq) => {
       const matchSearch =
@@ -95,25 +105,40 @@ export default function EquipementsPage() {
         <div>
           <h1 className="dashboard-title">Parc Matériel</h1>
           <p className="dashboard-subtitle">
-            Gestion centralisée des équipements informatiques, salles et QR codes.
+            Équipements, salles et étiquettes QR.
           </p>
         </div>
 
         {isAdmin && (
-          <Link to="/equipements/nouveau" className="btn-primary-pro">
+          <button type="button" className="btn-primary-pro" onClick={() => setEnEdition(null)}>
             <PlusCircle size={18} />
             <span>Ajouter un équipement</span>
-          </Link>
+          </button>
         )}
       </div>
 
       {error && <div className="alert-error">{error}</div>}
+      {ok && <div className="alert-success">{ok}</div>}
 
-      {/* Barre de filtres moderne et compacte (Grille horizontale) */}
+      {enEdition !== undefined && (
+        <EquipementForm
+          equipement={enEdition}
+          salles={salles}
+          types={types}
+          onClose={() => setEnEdition(undefined)}
+          onSaved={(saved) => {
+            setEnEdition(undefined);
+            setOk(`Équipement ${saved.reference} enregistré.`);
+            charger();
+          }}
+        />
+      )}
+
+      {/* Barre de filtres */}
       <div className="card" style={{ padding: '1.25rem', marginBottom: '1.25rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.85rem', color: '#0f3d68', fontWeight: 600, fontSize: '0.9rem' }}>
           <SlidersHorizontal size={16} />
-          <span>Filtres & Recherche instantanée</span>
+          <span>Filtres</span>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem' }}>
@@ -200,7 +225,7 @@ export default function EquipementsPage() {
                   <th>Salle</th>
                   <th>État</th>
                   <th>Prix d'achat</th>
-                  <th></th>
+                  <th style={{ textAlign: 'right' }}>{isAdmin ? 'Actions' : ''}</th>
                 </tr>
               </thead>
               <tbody>
@@ -236,8 +261,17 @@ export default function EquipementsPage() {
                       </span>
                     </td>
                     <td style={{ fontWeight: 500 }}>{formatPrix(eq.prixAchat)}</td>
-                    <td className="action-cell" style={{ textAlign: 'right' }}>
-                      <ArrowRight size={16} color="#94a3b8" />
+                    <td className="action-cell" onClick={(e) => e.stopPropagation()}>
+                      {isAdmin && (
+                        <div className="row-actions">
+                          <button type="button" className="btn btn-small" onClick={() => setEnEdition(eq)}>
+                            <Pencil size={14} /> Modifier
+                          </button>
+                          <button type="button" className="btn btn-small danger" onClick={() => supprimer(eq)} aria-label={`Supprimer ${eq.reference}`}>
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { User, Wrench, Laptop, Building, Calendar, ArrowLeft, FileText, UserCog, CheckCircle2 } from 'lucide-react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import {
+  User, Wrench, Laptop, Building, Calendar, ArrowLeft, FileText, UserCog, CheckCircle2, Pencil, Trash2,
+} from 'lucide-react';
 import api, { errorMessage } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import {
@@ -10,9 +12,9 @@ import {
   type StatutReclamation } from '../api/types';
 import { formatDateTime } from '../utils/format';
 import {
-  affecterTechnicien, changerPriorite, cloturerReclamation, listTechniciens,
+  affecterTechnicien, changerPriorite, cloturerReclamation, listTechniciens, modifierReclamation, supprimerReclamation,
 } from '../api/reclamations';
-import { changerStatut, listInterventions } from '../api/suivi';
+import { changerStatut, deleteIntervention, listInterventions } from '../api/suivi';
 import { PRIORITES, type Intervention, type Priorite, type User as Utilisateur } from '../api/types';
 import InterventionForm from '../components/InterventionForm';
 import InterventionList from '../components/InterventionList';
@@ -31,6 +33,14 @@ export default function ReclamationDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const navigate = useNavigate();
+
+  // Administrateur : modification de la réclamation et correction des interventions
+  const [edition, setEdition] = useState(false);
+  const [editDescription, setEditDescription] = useState('');
+  const [editCategorie, setEditCategorie] = useState('');
+  const [editPriorite, setEditPriorite] = useState<Priorite>('MOYENNE');
+  const [interventionEditee, setInterventionEditee] = useState<Intervention | null>(null);
 
   // Charger les détails de la réclamation
   const fetchReclamation = () => {
@@ -158,9 +168,33 @@ export default function ReclamationDetailPage() {
       {ok && <div className="alert-success">{ok}</div>}
 
       {/* Actions de l'administrateur */}
-      {isAdmin && reclamation.statut !== 'CLOTURE' && (
+      {isAdmin && (
         <div className="card" style={{ marginBottom: '1.5rem' }}>
-          <div className="card-header-pro"><UserCog size={20} className="text-primary" /><h2>Gestion de la réclamation</h2></div>
+          <div className="card-header-pro">
+            <UserCog size={20} className="text-primary" /><h2>Gestion de la réclamation</h2>
+            <span className="row-actions" style={{ marginLeft: 'auto' }}>
+              <button type="button" className="btn btn-small" disabled={actionLoading} onClick={() => {
+                setEditDescription(reclamation.description);
+                setEditCategorie(reclamation.categorie ?? '');
+                setEditPriorite(reclamation.priorite);
+                setEdition(true);
+              }}>
+                <Pencil size={14} /> Modifier
+              </button>
+              <button type="button" className="btn btn-small danger" disabled={actionLoading} onClick={async () => {
+                if (!window.confirm(`Supprimer la réclamation #${reclamation.id} et ses interventions ? Cette action est définitive.`)) return;
+                try {
+                  await supprimerReclamation(reclamation.id);
+                  navigate('/reclamations');
+                } catch (err) {
+                  setError(errorMessage(err));
+                }
+              }}>
+                <Trash2 size={14} /> Supprimer
+              </button>
+            </span>
+          </div>
+          {reclamation.statut !== 'CLOTURE' && (
           <div className="form-row" style={{ alignItems: 'flex-end' }}>
             {ouverte && (
               <div className="form-group">
@@ -198,18 +232,64 @@ export default function ReclamationDetailPage() {
               </button>
             </div>
           </div>
+          )}
         </div>
       )}
 
       {showForm && (
-        <div className="modal-backdrop" onMouseDown={() => setShowForm(false)}>
-          <div className="modal card wide" onMouseDown={(e) => e.stopPropagation()}>
-            <InterventionForm
-              reclamationId={reclamation.id}
-              onClose={() => setShowForm(false)}
-              onSaved={() => { setShowForm(false); setOk('Intervention enregistrée.'); fetchReclamation(); }}
-            />
-          </div>
+        <InterventionForm
+          reclamationId={reclamation.id}
+          onClose={() => setShowForm(false)}
+          onSaved={() => { setShowForm(false); setOk('Intervention enregistrée.'); fetchReclamation(); }}
+        />
+      )}
+
+      {interventionEditee && (
+        <InterventionForm
+          reclamationId={reclamation.id}
+          intervention={interventionEditee}
+          onClose={() => setInterventionEditee(null)}
+          onSaved={() => { setInterventionEditee(null); setOk('Intervention modifiée.'); fetchReclamation(); }}
+        />
+      )}
+
+      {edition && (
+        <div className="modal-backdrop" onMouseDown={() => setEdition(false)}>
+          <form className="modal card" onMouseDown={(e) => e.stopPropagation()}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (editDescription.trim().length < 10) {
+                    setError('La description doit contenir au moins 10 caractères.');
+                    return;
+                  }
+                  setEdition(false);
+                  void action(() => modifierReclamation(reclamation.id, {
+                    description: editDescription.trim(),
+                    categorie: editCategorie.trim() || null,
+                    priorite: editPriorite,
+                  }), 'Réclamation modifiée.');
+                }}>
+            <h3>Modifier la réclamation #{reclamation.id}</h3>
+            <label htmlFor="edit-desc">Description</label>
+            <textarea id="edit-desc" rows={5} required minLength={10} maxLength={2000}
+                      value={editDescription} onChange={(e) => setEditDescription(e.target.value)} />
+            <div className="row">
+              <div>
+                <label htmlFor="edit-cat">Catégorie</label>
+                <input id="edit-cat" value={editCategorie} onChange={(e) => setEditCategorie(e.target.value)} />
+              </div>
+              <div>
+                <label htmlFor="edit-prio">Priorité</label>
+                <select id="edit-prio" value={editPriorite} onChange={(e) => setEditPriorite(e.target.value as Priorite)}>
+                  {PRIORITES.map((p) => <option key={p} value={p}>{PRIORITE_LABELS[p]}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="modal-actions">
+              <button type="button" className="btn btn-outline" onClick={() => setEdition(false)}>Annuler</button>
+              <button type="submit" className="btn btn-primary">Enregistrer</button>
+            </div>
+          </form>
         </div>
       )}
 
@@ -332,9 +412,14 @@ export default function ReclamationDetailPage() {
       {user?.role !== 'DECLARANT' && (
         <div className="card" style={{ marginTop: '1.5rem' }}>
           <h3>Interventions ({interventions.length})</h3>
-          {interventions.length === 0
-            ? <p className="muted">Aucune intervention enregistrée.</p>
-            : <InterventionList items={interventions} />}
+          <InterventionList
+            items={interventions}
+            onEdit={isAdmin ? setInterventionEditee : undefined}
+            onDelete={isAdmin ? (i) => {
+              if (window.confirm('Supprimer cette intervention ? Cette action est définitive.'))
+                void action(() => deleteIntervention(i.id), 'Intervention supprimée.');
+            } : undefined}
+          />
         </div>
       )}
     </div>

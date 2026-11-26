@@ -111,7 +111,7 @@ export default function Layout() {
     },
     {
       to: '/statistiques',
-      label: 'Statistiques & IA',
+      label: 'Statistiques',
       icon: BarChart3,
       roles: ['ADMINISTRATEUR'],
     },

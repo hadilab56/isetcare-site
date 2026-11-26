@@ -1,6 +1,6 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Sparkles, Lightbulb, AlertTriangle } from 'lucide-react';
+import { Lightbulb, AlertTriangle } from 'lucide-react';
 import { errorMessage } from '../api/client';
 import { getEquipement } from '../api/materiel';
 import { analyzeDescription } from '../api/ai';
@@ -167,8 +167,8 @@ export default function ReclamationNewPage() {
             disabled={aiLoading || description.trim().length < 10}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
           >
-            <Sparkles size={16} />
-            {aiLoading ? 'Analyse en cours…' : "Classer avec l'IA"}
+            <Lightbulb size={16} />
+            {aiLoading ? 'Analyse en cours…' : "Proposer catégorie et priorité (IA)"}
           </button>
           {description.trim().length < 10 && (
             <span className="sub-text" style={{ marginLeft: '0.75rem' }}>Écrivez 10 caractères minimum pour activer.</span>
@@ -181,7 +181,7 @@ export default function ReclamationNewPage() {
         {analysis && !popup && (
           <div className="card" style={{ background: '#f8fafc', marginBottom: '1.25rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <Sparkles size={16} />
+              <Lightbulb size={16} />
               <span>Catégorie : <strong>{categorie || 'non précisée'}</strong></span>
               <span>· Priorité : <strong>{priorite ? PRIORITE_LABELS[priorite] : 'Moyenne'}</strong></span>
               <button type="button" className="btn" onClick={() => setPopup(true)}>Modifier</button>
@@ -200,7 +200,7 @@ export default function ReclamationNewPage() {
             <div className="modal card" role="dialog" aria-modal="true" aria-labelledby="ai-title"
                  onMouseDown={(e) => e.stopPropagation()}>
               <h2 id="ai-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: 0 }}>
-                <Sparkles size={20} /> Suggestion de l'IA
+                <Lightbulb size={20} /> Suggestion de l'IA
               </h2>
               <p className="sub-text">
                 Analyse : <strong>{analysis.source === 'gemini' ? 'Gemini (IA)' : 'mots-clés'}</strong>

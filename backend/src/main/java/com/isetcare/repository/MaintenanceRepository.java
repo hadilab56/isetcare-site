@@ -44,4 +44,6 @@ public interface MaintenanceRepository extends JpaRepository<MaintenancePreventi
             return cb.and(p.toArray(new Predicate[0]));
         };
     }
+
+    boolean existsByTechnicienId(Long technicienId);
 }

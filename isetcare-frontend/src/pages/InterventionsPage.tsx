@@ -1,15 +1,11 @@
 import { useEffect, useState, useMemo } from 'react';
 import {  useNavigate } from 'react-router-dom';
-import {
-  Wrench,
-  Search,
-  
-  DollarSign,
-  
-  User,
-  ArrowRight } from 'lucide-react';
+import { Wrench, Search, DollarSign, User, Pencil, Trash2 } from 'lucide-react';
 import api, { errorMessage } from '../api/client';
 import type { Intervention } from '../api/types';
+import { useAuth } from '../auth/AuthContext';
+import { deleteIntervention } from '../api/suivi';
+import InterventionForm from '../components/InterventionForm';
 import {  formatPrix } from '../utils/format';
 
 export default function InterventionsPage() {
@@ -18,8 +14,12 @@ export default function InterventionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [ok, setOk] = useState('');
+  const [editee, setEditee] = useState<Intervention | null>(null);
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMINISTRATEUR';
 
-  useEffect(() => {
+  const charger = () => {
     setLoading(true);
     api
       .get<Intervention[]>('/interventions')
@@ -28,7 +28,21 @@ export default function InterventionsPage() {
         setError(errorMessage(err, 'Impossible de charger les interventions.'))
       )
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(charger, []);
+
+  const supprimer = async (i: Intervention) => {
+    if (!window.confirm(`Supprimer l'intervention du ticket #${i.reclamationId} ? Cette action est définitive.`)) return;
+    setError(null); setOk('');
+    try {
+      await deleteIntervention(i.id);
+      setOk('Intervention supprimée.');
+      charger();
+    } catch (err) {
+      setError(errorMessage(err));
+    }
+  };
 
   const filtered = useMemo(() => {
     return interventions.filter(
@@ -59,6 +73,16 @@ export default function InterventionsPage() {
       </div>
 
       {error && <div className="alert-error">{error}</div>}
+      {ok && <div className="alert-success">{ok}</div>}
+
+      {editee && (
+        <InterventionForm
+          reclamationId={editee.reclamationId}
+          intervention={editee}
+          onClose={() => setEditee(null)}
+          onSaved={() => { setEditee(null); setOk('Intervention modifiée.'); charger(); }}
+        />
+      )}
 
       {/* KPIs rapides */}
       <div className="kpi-grid">
@@ -121,7 +145,7 @@ export default function InterventionsPage() {
                   <th>Durée</th>
                   <th>Coût</th>
                   <th>Résultat</th>
-                  <th></th>
+                  <th style={{ textAlign: 'right' }}>{isAdmin ? 'Actions' : ''}</th>
                 </tr>
               </thead>
               <tbody>
@@ -162,8 +186,18 @@ export default function InterventionsPage() {
                         <span className="badge badge-amber">En cours</span>
                       )}
                     </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <ArrowRight size={16} color="#94a3b8" />
+                    <td className="action-cell" onClick={(e) => e.stopPropagation()}>
+                      {isAdmin && (
+                        <div className="row-actions">
+                          <button type="button" className="btn btn-small" onClick={() => setEditee(item)}>
+                            <Pencil size={14} /> Modifier
+                          </button>
+                          <button type="button" className="btn btn-small danger" onClick={() => supprimer(item)}
+                                  aria-label="Supprimer l'intervention">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}

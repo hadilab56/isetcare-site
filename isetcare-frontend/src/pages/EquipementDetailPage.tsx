@@ -8,10 +8,9 @@ import {
   DollarSign,
   QrCode,
   AlertCircle,
-  
-  
   ArrowLeft,
-  Edit } from 'lucide-react';
+  Edit,
+  Trash2 } from 'lucide-react';
 import api, { errorMessage } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import {
@@ -19,7 +18,13 @@ import {
   type Equipement,
   type EtatEquipement,
   type Historique,
+  type Salle,
+  type TypeEquipement,
 } from '../api/types';
+import { deleteEquipement, listSalles, listTypes } from '../api/materiel';
+import EquipementForm from '../components/EquipementForm';
+import QrCodeView from '../components/QrCodeView';
+import QRCode from 'qrcode';
 import { formatPrix, formatDate } from '../utils/format';
 
 export default function EquipementDetailPage() {
@@ -32,7 +37,45 @@ export default function EquipementDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const isTechOrAdmin = user?.role === 'TECHNICIEN' || user?.role === 'ADMINISTRATEUR';
+  const isAdmin = user?.role === 'ADMINISTRATEUR';
+  const [qrOuvert, setQrOuvert] = useState(false);
+  const [edition, setEdition] = useState(false);
+  const [salles, setSalles] = useState<Salle[]>([]);
+  const [types, setTypes] = useState<TypeEquipement[]>([]);
+  const [ok, setOk] = useState('');
+  const [actionError, setActionError] = useState('');
+  const [qrImage, setQrImage] = useState('');
+
+  // Vrai QR code, généré dans le navigateur à partir du contenu stocké en base
+  useEffect(() => {
+    if (!equipement) return;
+    QRCode.toDataURL(equipement.qrCode || `ISETCARE:${equipement.reference}`, { width: 320, margin: 1 })
+      .then(setQrImage)
+      .catch(() => setQrImage(''));
+  }, [equipement]);
+
+  const ouvrirEdition = async () => {
+    setActionError('');
+    try {
+      const [s, t] = await Promise.all([listSalles(), listTypes()]);
+      setSalles(s);
+      setTypes(t);
+      setEdition(true);
+    } catch (err) {
+      setActionError(errorMessage(err, 'Impossible de charger les salles et les types.'));
+    }
+  };
+
+  const supprimer = async () => {
+    if (!equipement) return;
+    if (!window.confirm(`Supprimer l'équipement ${equipement.reference} ? Cette action est définitive.`)) return;
+    try {
+      await deleteEquipement(equipement.id);
+      navigate('/equipements');
+    } catch (err) {
+      setActionError(errorMessage(err, 'Suppression impossible : cet équipement a peut-être un historique de pannes.'));
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -105,24 +148,45 @@ export default function EquipementDetailPage() {
           </h1>
         </div>
 
-        {/* Actions réservées admin/technicien */}
-        {isTechOrAdmin && (
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <Link
-              to={`/reclamations/nouvelle?equipementId=${equipement.id}`}
-              className="btn"
-              style={{ background: '#fef3c7', color: '#b45309', borderColor: '#fde68a' }}
-            >
+        <div className="row-actions">
+          {/* Seuls les déclarants signalent une panne (règle du serveur) */}
+          {user?.role === 'DECLARANT' && (
+            <Link to={`/reclamations/nouvelle?equipementId=${equipement.id}`} className="btn primary">
               <AlertCircle size={16} /> Signaler une panne
             </Link>
-            {user?.role === 'ADMINISTRATEUR' && (
-              <Link to={`/equipements/${equipement.id}/modifier`} className="btn primary">
+          )}
+          <button type="button" className="btn" onClick={() => setQrOuvert(true)}>
+            <QrCode size={16} /> Étiquette QR
+          </button>
+          {isAdmin && (
+            <>
+              <button type="button" className="btn" onClick={ouvrirEdition}>
                 <Edit size={16} /> Modifier
-              </Link>
-            )}
-          </div>
-        )}
+              </button>
+              <button type="button" className="btn danger" onClick={supprimer}>
+                <Trash2 size={16} /> Supprimer
+              </button>
+            </>
+          )}
+        </div>
       </div>
+
+      {ok && <div className="alert-success">{ok}</div>}
+      {actionError && <div className="alert-error">{actionError}</div>}
+      {qrOuvert && <QrCodeView equipement={equipement} onClose={() => setQrOuvert(false)} />}
+      {edition && (
+        <EquipementForm
+          equipement={equipement}
+          salles={salles}
+          types={types}
+          onClose={() => setEdition(false)}
+          onSaved={(saved) => {
+            setEdition(false);
+            setEquipement(saved);
+            setOk('Équipement modifié.');
+          }}
+        />
+      )}
 
       {/* Grille principale : Informations & QR Code */}
       <div className="profile-grid">
@@ -188,18 +252,14 @@ export default function EquipementDetailPage() {
               <QrCode size={20} className="text-primary" />
               <h2>QR Code d'identification</h2>
             </div>
-            <p className="sub-text" style={{ margin: '0.2rem 0 1rem 0' }}>Scannez pour un accès direct mobile</p>
-            
-            {/* Simulation visuelle d'un QR Code propre */}
-            <div style={{ background: '#f8fafc', padding: '1rem', border: '1px solid #cbd5e1', borderRadius: '12px', display: 'inline-block' }}>
-              <div style={{ width: '130px', height: '130px', background: '#0f172a', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', fontFamily: 'monospace', fontSize: '0.75rem', padding: '0.5rem', wordBreak: 'break-all' }}>
-                <QrCode size={48} style={{ marginBottom: '0.5rem', color: '#38bdf8' }} />
-                <span>{equipement.qrCode}</span>
-              </div>
+            <p className="sub-text" style={{ margin: '0.2rem 0 1rem 0' }}>À scanner avec l'application mobile.</p>
+            {qrImage && <img src={qrImage} alt={`QR code ${equipement.reference}`} width={160} height={160} />}
+            <div style={{ marginTop: '0.75rem' }} className="sub-text">
+              Contenu : <code>{equipement.qrCode}</code>
             </div>
-            <div style={{ marginTop: '1rem', fontSize: '0.82rem', color: '#64748b' }}>
-              Format : <code style={{ color: '#0f3d68' }}>{equipement.qrCode}</code>
-            </div>
+            <button type="button" className="btn" style={{ marginTop: '1rem' }} onClick={() => setQrOuvert(true)}>
+              Imprimer l'étiquette
+            </button>
           </div>
         </div>
       </div>

@@ -22,7 +22,7 @@ export default function StatistiquesPage() {
     <div className="dashboard-container">
       <div className="dashboard-header">
         <div>
-          <h1 className="dashboard-title">Statistiques &amp; IA</h1>
+          <h1 className="dashboard-title">Statistiques</h1>
           <p className="dashboard-subtitle">Indicateurs du parc et aide à la décision réparer / remplacer.</p>
         </div>
       </div>

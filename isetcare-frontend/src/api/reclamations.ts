@@ -42,3 +42,14 @@ export const cloturerReclamation = async (id: number): Promise<Reclamation> =>
 /** Techniciens actifs (liste réservée à l'administrateur, utilisée pour l'affectation). */
 export const listTechniciens = async (): Promise<User[]> =>
   (await api.get<User[]>('/users', { params: { role: 'TECHNICIEN' } })).data.filter((u) => u.actif);
+
+/** Administrateur : corriger description, catégorie et priorité. */
+export const modifierReclamation = async (
+  id: number,
+  input: { description: string; categorie: string | null; priorite: Priorite },
+): Promise<Reclamation> => (await api.put<Reclamation>(`/reclamations/${id}`, input)).data;
+
+/** Administrateur : supprimer une réclamation (et ses interventions). */
+export const supprimerReclamation = async (id: number): Promise<void> => {
+  await api.delete(`/reclamations/${id}`);
+};

@@ -46,4 +46,6 @@ public interface ReclamationRepository extends JpaRepository<Reclamation, Long>,
             return cb.and(p.toArray(new Predicate[0]));
         };
     }
+
+    boolean existsByDeclarantIdOrTechnicienAffecteId(Long declarantId, Long technicienId);
 }

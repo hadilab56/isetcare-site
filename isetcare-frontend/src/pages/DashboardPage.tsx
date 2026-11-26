@@ -175,7 +175,7 @@ export default function DashboardPage() {
           <div className="empty-state">
             <Wrench size={36} className="empty-icon" />
             <h3>Aucune réclamation trouvée</h3>
-            <p>Tout semble fonctionner correctement ou aucun résultat ne correspond à votre recherche.</p>
+            <p>Aucun résultat pour ces critères.</p>
             {user?.role === 'DECLARANT' && (
               <Link to="/reclamations/nouvelle" className="btn-secondary-pro">
                 Créer mon premier signalement

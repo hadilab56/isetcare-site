@@ -1,6 +1,7 @@
 package com.isetcare.controller;
 
 import com.isetcare.dto.ReclamationDtos.AffectationRequest;
+import com.isetcare.dto.ReclamationDtos.ModificationRequest;
 import com.isetcare.dto.ReclamationDtos.PrioriteRequest;
 import com.isetcare.dto.ReclamationDtos.ReclamationDto;
 import com.isetcare.dto.ReclamationDtos.StatutRequest;
@@ -230,6 +231,31 @@ public class ReclamationController {
         notifications.notifier(r.getDeclarant(), TypeNotification.CHANGEMENT_STATUT,
                 "Votre réclamation #" + r.getId() + " (" + r.getEquipement().getReference() + ") a été clôturée.");
         return ReclamationDto.from(saved);
+    }
+
+    /** Modifier description, catégorie et priorité (administrateur). */
+    @PutMapping("/{id}")
+    @Transactional
+    public ReclamationDto modifier(@PathVariable Long id, @Valid @RequestBody ModificationRequest req) {
+        Reclamation r = find(id);
+        r.setDescription(req.description().trim());
+        r.setCategorie(req.categorie() == null || req.categorie().isBlank() ? null : req.categorie().trim());
+        r.setPriorite(req.priorite());
+        return ReclamationDto.from(reclamations.save(r));
+    }
+
+    /** Supprimer une réclamation avec ses interventions et son analyse (administrateur). */
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Transactional
+    public void supprimer(@PathVariable Long id) {
+        Reclamation r = find(id);
+        Equipement eq = r.getEquipement();
+        interventions.deleteAll(interventions.findByReclamationId(id));
+        analyses.findByReclamationId(id).ifPresent(analyses::delete);
+        reclamations.delete(r);
+        reclamations.flush();
+        etatSync.synchroniser(eq);
     }
 
     private Reclamation find(Long id) {

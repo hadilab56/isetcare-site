@@ -38,7 +38,9 @@ public class SecurityConfig {
                 // Page d'erreur interne de Spring : sans cette règle, un « accès refusé » (403)
                 // y est redirigé, exige une connexion et devient un 401, ce qui déconnecte l'utilisateur du site.
                 .requestMatchers("/error").permitAll()
-                    .requestMatchers("/api/stats/**").hasRole("ADMINISTRATEUR")
+                .requestMatchers("/api/stats/**").hasRole("ADMINISTRATEUR")
+                // Gestion des comptes (US02) : administrateur uniquement
+                .requestMatchers("/api/users/**").hasRole("ADMINISTRATEUR")
                 // Suivi d'un équipement : historique = admin + technicien ; décisions réparer/remplacer = admin
                 .requestMatchers(HttpMethod.GET, "/api/equipements/*/historique").hasAnyRole("ADMINISTRATEUR", "TECHNICIEN")
                 .requestMatchers("/api/equipements/*/decisions").hasRole("ADMINISTRATEUR")
@@ -53,6 +55,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PATCH, "/api/reclamations/*/statut").hasRole("TECHNICIEN")
                 .requestMatchers(HttpMethod.PATCH, "/api/reclamations/*/affectation",
                         "/api/reclamations/*/priorite", "/api/reclamations/*/cloture").hasRole("ADMINISTRATEUR")
+                .requestMatchers(HttpMethod.PUT, "/api/reclamations/*").hasRole("ADMINISTRATEUR")
+                .requestMatchers(HttpMethod.DELETE, "/api/reclamations/*").hasRole("ADMINISTRATEUR")
+                .requestMatchers(HttpMethod.PUT, "/api/interventions/*").hasRole("ADMINISTRATEUR")
+                .requestMatchers(HttpMethod.DELETE, "/api/interventions/*").hasRole("ADMINISTRATEUR")
                 .requestMatchers(HttpMethod.GET, "/api/reclamations/*/interventions").hasAnyRole("ADMINISTRATEUR", "TECHNICIEN")
                 .requestMatchers(HttpMethod.GET, "/api/reclamations/**").authenticated()
                 // Maintenance préventive : réalisation = technicien ; lecture = admin + technicien ; le reste = admin

@@ -23,3 +23,11 @@ export const saveDecision = async (
   equipementId: number, decision: Decision, coutRemplacementEstime: number | null,
 ): Promise<DecisionRecord> =>
   (await api.post<DecisionRecord>(`/equipements/${equipementId}/decisions`, { decision, coutRemplacementEstime })).data;
+
+// ----- Correction des interventions (administrateur) -----
+export const updateIntervention = async (id: number, input: InterventionInput): Promise<Intervention> =>
+  (await api.put<Intervention>(`/interventions/${id}`, input)).data;
+
+export const deleteIntervention = async (id: number): Promise<void> => {
+  await api.delete(`/interventions/${id}`);
+};

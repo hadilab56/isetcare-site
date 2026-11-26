@@ -4,7 +4,12 @@ import com.isetcare.dto.UserDto;
 import com.isetcare.dto.UserRequest;
 import com.isetcare.model.Role;
 import com.isetcare.model.Utilisateur;
+import com.isetcare.repository.InterventionRepository;
+import com.isetcare.repository.MaintenanceRepository;
+import com.isetcare.repository.NotificationRepository;
+import com.isetcare.repository.ReclamationRepository;
 import com.isetcare.repository.UtilisateurRepository;
+import org.springframework.transaction.annotation.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,10 +26,20 @@ import java.util.Map;
 public class UserController {
     private final UtilisateurRepository users;
     private final PasswordEncoder encoder;
+    private final ReclamationRepository reclamations;
+    private final InterventionRepository interventions;
+    private final MaintenanceRepository maintenances;
+    private final NotificationRepository notifications;
 
-    public UserController(UtilisateurRepository users, PasswordEncoder encoder) {
+    public UserController(UtilisateurRepository users, PasswordEncoder encoder, ReclamationRepository reclamations,
+                          InterventionRepository interventions, MaintenanceRepository maintenances,
+                          NotificationRepository notifications) {
         this.users = users;
         this.encoder = encoder;
+        this.reclamations = reclamations;
+        this.interventions = interventions;
+        this.maintenances = maintenances;
+        this.notifications = notifications;
     }
 
     @GetMapping
@@ -72,6 +87,25 @@ public class UserController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Vous ne pouvez pas désactiver votre propre compte.");
         u.setActif(Boolean.TRUE.equals(body.get("actif")));
         return UserDto.from(users.save(u));
+    }
+
+    /**
+     * Supprimer un compte (administrateur). Possible seulement s'il n'a aucun historique
+     * (réclamation, intervention, maintenance) ; sinon il faut le désactiver.
+     */
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Transactional
+    public void delete(@PathVariable Long id, @AuthenticationPrincipal Utilisateur current) {
+        Utilisateur u = find(id);
+        if (u.getId().equals(current.getId()))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Vous ne pouvez pas supprimer votre propre compte.");
+        if (reclamations.existsByDeclarantIdOrTechnicienAffecteId(id, id) || interventions.existsByTechnicienId(id)
+                || maintenances.existsByTechnicienId(id))
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Ce compte a un historique (réclamations, interventions ou maintenances) : désactivez-le plutôt.");
+        notifications.deleteByUtilisateurId(id);
+        users.delete(u);
     }
 
     private Utilisateur find(Long id) {

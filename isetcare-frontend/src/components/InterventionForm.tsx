@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { errorMessage } from '../api/client';
-import { createIntervention } from '../api/suivi';
+import { createIntervention, updateIntervention } from '../api/suivi';
 import type { Intervention } from '../api/types';
 import { nowLocalInput } from '../utils/format';
 
@@ -8,18 +8,23 @@ const RESULTATS = ['Réparé', 'Partiellement réparé', 'Pièce remplacée', 'E
 
 interface Props {
   reclamationId: number;
+  /** Intervention à corriger (administrateur). Absente : nouvelle intervention. */
+  intervention?: Intervention;
   onClose: () => void;
   onSaved: (i: Intervention) => void;
 }
 
+/** "AAAA-MM-JJThh:mm:ss" -> valeur d'un champ datetime-local. */
+const versChamp = (d: string | null | undefined) => (d ? d.slice(0, 16) : '');
+
 /** US17 / US19 : le technicien enregistre son diagnostic, l'action effectuée, la durée et le coût. */
-export default function InterventionForm({ reclamationId, onClose, onSaved }: Props) {
-  const [diagnostic, setDiagnostic] = useState('');
-  const [action, setAction] = useState('');
-  const [debut, setDebut] = useState(nowLocalInput());
-  const [fin, setFin] = useState('');
-  const [cout, setCout] = useState('');
-  const [resultat, setResultat] = useState('');
+export default function InterventionForm({ reclamationId, intervention, onClose, onSaved }: Props) {
+  const [diagnostic, setDiagnostic] = useState(intervention?.diagnostic ?? '');
+  const [action, setAction] = useState(intervention?.actionEffectuee ?? '');
+  const [debut, setDebut] = useState(intervention ? versChamp(intervention.dateDebut) : nowLocalInput());
+  const [fin, setFin] = useState(versChamp(intervention?.dateFin));
+  const [cout, setCout] = useState(intervention?.cout != null ? String(intervention.cout) : '');
+  const [resultat, setResultat] = useState(intervention?.resultat ?? '');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -31,14 +36,17 @@ export default function InterventionForm({ reclamationId, onClose, onSaved }: Pr
     if (cout !== '' && (!Number.isFinite(Number(cout)) || Number(cout) < 0)) return setError('Le coût doit être un nombre positif ou nul.');
     setSaving(true);
     try {
-      const saved = await createIntervention(reclamationId, {
+      const input = {
         diagnostic: diagnostic.trim(),
         actionEffectuee: action.trim() || null,
         dateDebut: debut || null,
         dateFin: fin || null,
         cout: cout === '' ? null : Number(cout),
         resultat: resultat || null,
-      });
+      };
+      const saved = intervention
+        ? await updateIntervention(intervention.id, input)
+        : await createIntervention(reclamationId, input);
       onSaved(saved);
     } catch (err) {
       setError(errorMessage(err));
@@ -49,7 +57,7 @@ export default function InterventionForm({ reclamationId, onClose, onSaved }: Pr
   return (
     <div className="modal-backdrop" onMouseDown={onClose}>
       <form className="modal card wide" onSubmit={submit} onMouseDown={(e) => e.stopPropagation()}>
-        <h3>Nouvelle intervention</h3>
+        <h3>{intervention ? "Modifier l'intervention" : 'Nouvelle intervention'}</h3>
         {error && <div className="alert alert-error">{error}</div>}
 
         <label htmlFor="diag">Diagnostic</label>

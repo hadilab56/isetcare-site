@@ -15,4 +15,6 @@ public interface InterventionRepository extends JpaRepository<Intervention, Long
     List<Intervention> findByTechnicienId(Long technicienId);
 
     long countByReclamationId(Long reclamationId);
+
+    boolean existsByTechnicienId(Long technicienId);
 }

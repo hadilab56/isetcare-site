@@ -1,7 +1,9 @@
 package com.isetcare.dto;
 
 import com.isetcare.model.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
@@ -16,6 +18,11 @@ public final class ReclamationDtos {
     public record PrioriteRequest(@NotNull Priorite priorite) {}
 
     public record StatutRequest(@NotNull StatutReclamation statut) {}
+
+    /** Modification d'une réclamation par l'administrateur. */
+    public record ModificationRequest(@NotBlank @Size(min = 10, max = 2000) String description,
+                                      @Size(max = 100) String categorie,
+                                      @NotNull Priorite priorite) {}
 
     public record ReclamationDto(
             Long id, String description, boolean avecPhoto, LocalDateTime dateCreation,

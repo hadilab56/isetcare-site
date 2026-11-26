@@ -67,7 +67,7 @@ export default function NotificationsPage() {
     <div className="dashboard-container" style={{ maxWidth: '960px' }}>
       <div className="dashboard-header">
         <div>
-          <h1 className="dashboard-title">Centre de notifications</h1>
+          <h1 className="dashboard-title">Notifications</h1>
           <p className="dashboard-subtitle">
             Vous avez <strong>{unreadCount}</strong> notification(s) non lue(s).
           </p>
@@ -103,7 +103,7 @@ export default function NotificationsPage() {
           <div className="empty-state">
             <Bell size={38} className="empty-icon" />
             <h3>Aucune notification</h3>
-            <p>Vous êtes à jour sur toutes vos alertes.</p>
+            <p>Aucune notification non lue.</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
