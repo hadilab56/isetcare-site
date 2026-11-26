@@ -35,7 +35,23 @@ public class DataSeeder {
                            NotificationService notifications,
                            PasswordEncoder encoder) {
         return args -> {
-            if (users.count() > 0) return;
+            if (users.count() > 0) {
+                // Garde-fou : sans administrateur actif, plus personne ne peut gérer le site.
+                // On restaure alors le compte admin de démonstration.
+                boolean adminActif = users.findByRole(Role.ADMINISTRATEUR).stream().anyMatch(Utilisateur::isActif);
+                if (!adminActif) {
+                    Utilisateur admin = users.findByEmail("admin@isetcare.tn").orElse(null);
+                    if (admin == null) {
+                        users.save(user("Admin", "ISET", "admin@isetcare.tn", "Admin123!", Role.ADMINISTRATEUR,
+                                null, null, null, encoder));
+                    } else {
+                        admin.setRole(Role.ADMINISTRATEUR);
+                        admin.setActif(true);
+                        users.save(admin);
+                    }
+                }
+                return;
+            }
 
             Faker faker = new Faker(Locale.FRENCH);
             Random random = new Random();

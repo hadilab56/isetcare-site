@@ -2,10 +2,21 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import api, { TOKEN_KEY, setUnauthorizedHandler } from '../api/client';
 import type { User } from '../api/types';
 
+/** Inscription libre : le serveur crée toujours un compte déclarant. */
+export interface RegisterInput {
+  prenom: string;
+  nom: string;
+  email: string;
+  motDePasse: string;
+  departement: string | null;
+  fonction: string | null;
+}
+
 interface AuthState {
   user: User | null;
   loading: boolean;
   login: (email: string, motDePasse: string) => Promise<User>;
+  register: (input: RegisterInput) => Promise<User>;
   logout: () => void;
   setUser: (user: User) => void;
 }
@@ -43,7 +54,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return res.data.utilisateur;
   }, []);
 
-  const value = useMemo(() => ({ user, loading, login, logout, setUser }), [user, loading, login, logout]);
+  const register = useCallback(async (input: RegisterInput) => {
+    const res = await api.post<{ token: string; utilisateur: User }>('/auth/register', input);
+    localStorage.setItem(TOKEN_KEY, res.data.token);
+    setUser(res.data.utilisateur);
+    return res.data.utilisateur;
+  }, []);
+
+  const value = useMemo(() => ({ user, loading, login, register, logout, setUser }), [user, loading, login, register, logout]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   ShieldCheck,
   Mail,
@@ -151,6 +151,10 @@ export default function LoginPage() {
               <span>{loading ? 'Connexion…' : 'Se connecter'}</span>
             </button>
           </form>
+
+          <p style={{ marginTop: '1rem', fontSize: '0.92rem', textAlign: 'center' }}>
+            Pas encore de compte ? <Link to="/inscription">Créer un compte</Link>
+          </p>
 
           {/* Téléchargement de l'application Android (APK publié dans les « Releases » GitHub) */}
           <div className="app-download-box">
